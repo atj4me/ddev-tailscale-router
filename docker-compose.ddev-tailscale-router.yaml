@@ -1,0 +1,31 @@
+#ddev-generated
+# Simple template to demonstrate ddev-tailscale-router
+version: '3.7'
+
+services:
+  ddev-tailscale-router:
+    container_name: ddev-${DDEV_SITENAME}-ddev-tailscale-router
+    image: tailscale/tailscale:latest
+    command: tailscaled --hostname ${DDEV_SITENAME} --tun=userspace-networking --advertise-exit-node
+    restart: "no"
+    labels:
+      com.ddev.site-name: ${DDEV_SITENAME}
+      com.ddev.approot: $DDEV_APPROOT
+      # Traefik router labels for Tailscale integration
+      traefik.enable: "true"
+      traefik.http.routers.${DDEV_SITENAME}-router.entrypoints: "web"
+      traefik.http.routers.${DDEV_SITENAME}-router.rule: "Host(`${DDEV_SITENAME}.local`)"
+      traefik.http.services.${DDEV_SITENAME}-service.loadbalancer.server.port: "80"
+      traefik.http.routers.${DDEV_SITENAME}-router.tls: "true"
+    environment:
+      - TS_AUTHKEY=${TAILSCALE_AUTH_KEY}  # Provide your Tailscale auth key if necessary
+      - TAILSCALE_HOSTNAME=${DDEV_SITENAME} # Optionally set a hostname for Tailscale
+    volumes:
+      - ".:/mnt/ddev_config"
+      - "ddev-global-cache:/mnt/ddev-global-cache"
+      - /var/run/docker.sock:/var/run/docker.sock # For accessing Docker's network and interacting with Traefik
+    devices:
+      - "/dev/net/tun"  # Required for Tailscale to create its network interface
+    cap_add:
+      - NET_ADMIN  # Required to manage network interfaces
+

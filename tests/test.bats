@@ -16,7 +16,7 @@ setup() {
   set -eu -o pipefail
 
   # Override this variable for your add-on:
-  export GITHUB_REPO=ddev/ddev-addon-template
+  export GITHUB_REPO=ddev/ddev-tailscale-router
 
   TEST_BREW_PREFIX="$(brew --prefix 2>/dev/null || true)"
   export BATS_LIB_PATH="${BATS_LIB_PATH}:${TEST_BREW_PREFIX}/lib:/usr/lib/bats"
@@ -39,14 +39,23 @@ setup() {
 }
 
 health_checks() {
-  # Do something useful here that verifies the add-on
+  # Check if the Tailscale service is running
+  run docker ps | grep -q "ddev-${PROJNAME}-ddev-tailscale-router"
+  assert_success
 
-  # You can check for specific information in headers:
-  # run curl -sfI https://${PROJNAME}.ddev.site
-  # assert_output --partial "HTTP/2 200"
-  # assert_output --partial "test_header"
+  # Optionally check if the Tailscale service has the expected output in the logs
+  run docker logs ddev-${PROJNAME}-ddev-tailscale-router 2>&1 | grep -q "Tailscale is up"
+  assert_success
 
-  # Or check if some command gives expected output:
+  # Alternatively, check if Tailscale is connected
+  run docker exec ddev-${PROJNAME}-ddev-tailscale-router tailscale status
+  assert_success
+
+  # Check if the Tailscale service can reach the internet or a specific destination via its VPN
+  run curl -s https://icanhazip.com
+  assert_success
+
+  # Launch the DDEV site and check if everything works
   DDEV_DEBUG=true run ddev launch
   assert_success
   assert_output --partial "FULLURL https://${PROJNAME}.ddev.site"
