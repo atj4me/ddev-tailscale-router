@@ -1,21 +1,7 @@
 #!/usr/bin/env bats
 
-# Bats is a testing framework for Bash
-# Documentation https://bats-core.readthedocs.io/en/stable/
-# Bats libraries documentation https://github.com/ztombol/bats-docs
-
-# For local tests, install bats-core, bats-assert, bats-file, bats-support
-# And run this in the add-on root directory:
-#   bats ./tests/test.bats
-# To exclude release tests:
-#   bats ./tests/test.bats --filter-tags '!release'
-# For debugging:
-#   bats ./tests/test.bats --show-output-of-passing-tests --verbose-run --print-output-on-failure
-
 setup() {
   set -eu -o pipefail
-
-  # Override this variable for your add-on:
   export GITHUB_REPO=ddev/ddev-tailscale-router
 
   TEST_BREW_PREFIX="$(brew --prefix 2>/dev/null || true)"
@@ -26,10 +12,14 @@ setup() {
 
   export DIR="$(cd "$(dirname "${BATS_TEST_FILENAME}")/.." >/dev/null 2>&1 && pwd)"
   export PROJNAME="test-$(basename "${GITHUB_REPO}")"
+  
+  # Safe temporary directory creation
   mkdir -p ~/tmp
-  export TESTDIR=$(mktemp -d ~/tmp/${PROJNAME}.XXXXXX)
+  export TESTDIR=$(mktemp -d -t "${PROJNAME}.XXXXXX")
+
   export DDEV_NONINTERACTIVE=true
   export DDEV_NO_INSTRUMENTATION=true
+
   ddev delete -Oy "${PROJNAME}" >/dev/null 2>&1 || true
   cd "${TESTDIR}"
   run ddev config --project-name="${PROJNAME}" --project-tld=ddev.site
@@ -39,23 +29,23 @@ setup() {
 }
 
 health_checks() {
-  # Check if the Tailscale service is running
-  run docker ps | grep -q "ddev-${PROJNAME}-ddev-tailscale-router"
+  # Check if the Tailscale service is running inside DDEV
+  run ddev describe | grep -q "tailscale-router"
   assert_success
 
-  # Optionally check if the Tailscale service has the expected output in the logs
-  run docker logs ddev-${PROJNAME}-ddev-tailscale-router 2>&1 | grep -q "Tailscale is up"
+  # Check if Tailscale service logs indicate success
+  run docker logs ddev-${PROJNAME}-ddev-tailscale-router 2>&1 | grep -q "Tailscale is up" || docker logs ddev-${PROJNAME}-ddev-tailscale-router
   assert_success
 
-  # Alternatively, check if Tailscale is connected
+  # Check Tailscale connectivity
   run docker exec ddev-${PROJNAME}-ddev-tailscale-router tailscale status
   assert_success
 
-  # Check if the Tailscale service can reach the internet or a specific destination via its VPN
+  # Verify internet connectivity
   run curl -s https://icanhazip.com
   assert_success
 
-  # Launch the DDEV site and check if everything works
+  # Launch the DDEV site
   DDEV_DEBUG=true run ddev launch
   assert_success
   assert_output --partial "FULLURL https://${PROJNAME}.ddev.site"
@@ -64,7 +54,9 @@ health_checks() {
 teardown() {
   set -eu -o pipefail
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1
-  [ "${TESTDIR}" != "" ] && rm -rf ${TESTDIR}
+  if [ -n "${TESTDIR:-}" ]; then
+    rm -rf "${TESTDIR}"
+  fi
 }
 
 @test "install from directory" {
