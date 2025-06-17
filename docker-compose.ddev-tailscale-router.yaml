@@ -3,35 +3,16 @@ version: '3.7'
 
 services:
   ddev-tailscale-router:
-    container_name: ddev-${DDEV_SITENAME}-ddev-tailscale-router
     image: tailscale/tailscale:latest
-    command: >
-      tailscaled --hostname ${DDEV_SITENAME} --tun=userspace-networking --advertise-exit-node
-      --statedir=/var/lib/tailscale
-    restart: "no"
-    labels:
-      com.ddev.site-name: ${DDEV_SITENAME}
-      com.ddev.approot: $DDEV_APPROOT
-
-      # Traefik labels for HTTPS with Tailscale certificates
-      traefik.enable: "true"
-      traefik.http.routers.${DDEV_SITENAME}-router.entrypoints: "websecure"
-      traefik.http.routers.${DDEV_SITENAME}-router.rule: "Host(`${DDEV_SITENAME}.ts.net`)"
-      traefik.http.routers.${DDEV_SITENAME}-router.tls: "true"
-      traefik.http.routers.${DDEV_SITENAME}-router.tls.certresolver: "tailscale"
-      traefik.http.services.${DDEV_SITENAME}-service.loadbalancer.server.port: "80"
-
     environment:
-      - TS_AUTHKEY=${TAILSCALE_AUTH_KEY}
-      - TAILSCALE_HOSTNAME=${DDEV_SITENAME}.ts.net
-      - TS_EXTRA_ARGS=--statedir=/var/lib/tailscale
-
+      - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_HOSTNAME=${DDEV_PROJECT_NAME}
+      - TS_SERVE_CONFIG=/config/serve.json
     volumes:
-      - "/var/lib/tailscale:/var/lib/tailscale"  # Persist Tailscale data
-      - "/var/run/docker.sock:/var/run/docker.sock"  # Allow communication with Traefik
-
-    devices:
-      - "/dev/net/tun"
-
+      - ./tailscale-state:/var/lib/tailscale
+      - ./tailscale-config:/config
     cap_add:
       - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
