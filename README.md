@@ -58,7 +58,7 @@ After installation, a `.ddev/.env.tailscale-router` file is created in your proj
 Obtain an auth key (e.g., an ephemeral, reusable key) and set it using the `ddev dotenv` command:
 
 ```bash
-ddev dotenv .ddev/.env.tailscale-router TS_AUTHKEY=your_auth_key
+ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-xxxx
 ```
 
 Then restart DDEV:
@@ -73,13 +73,13 @@ By default, this add-on creates a private share, accessible only by you. You can
 * To enable public sharing: 
 
   ```bash
-  ddev dotenv --file .ddev/.env.tailscale-router TS_PRIVACY=public
+  ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=public
   ```
 
 * To switch back to private sharing (the default): 
 
   ```bash
-  ddev dotenv --file .ddev/.env.tailscale-router TS_PRIVACY=private
+  ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=private
   ```
 
 Remember to ddev restart after changing this setting for it to take effect. 
