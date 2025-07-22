@@ -1,4 +1,7 @@
-[![tests](https://github.com/atj4me/ddev-tailscale-router/actions/workflows/tests.yml/badge.svg)](https://github.com/atj4me/ddev-tailscale-router/actions/workflows/tests.yml) ![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)
+[![add-on registry](https://img.shields.io/badge/DDEV-Add--on_Registry-blue)](https://addons.ddev.com)
+[![tests](https://github.com/ddev/ddev-addon-template/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/ddev/ddev-addon-template/actions/workflows/tests.yml?query=branch%3Amain)
+[![last commit](https://img.shields.io/github/last-commit/ddev/ddev-addon-template)](https://github.com/ddev/ddev-addon-template/commits)
+[![release](https://img.shields.io/github/v/release/ddev/ddev-addon-template)](https://github.com/ddev/ddev-addon-template/releases/latest)
 
 # ddev-tailscale-router <!-- omit in toc -->
 
