@@ -17,16 +17,25 @@ With this setup, your development sites become accessible over Tailscale's secur
 
 ## Components of the Repository
 
-- **`docker-compose.tailscale-router.yaml`**  
-  The core configuration file that sets up the Tailscale subnet router within the DDEV environment.
 - **`install.yaml`**  
-  Provides instructions for setting up and installing the add-on in a DDEV project.
+  The DDEV add-on installation manifest. It copies the necessary files into your project's `.ddev` directory.
+- **`docker-compose.tailscale-router.yaml`**  
+  The core Docker Compose configuration that defines the `tailscale-router` service. It handles authenticating with Tailscale and uses `socat` to forward traffic from the Tailscale network to the DDEV web container.
+- **`tailscale-router/config/`**
+  This directory is copied into your project's `.ddev/tailscale-router/` directory. It contains the JSON configuration files for Tailscale's `serve` command, controlling whether the share is private or public. The Tailscale state is managed in a dedicated Docker volume, which is automatically cleaned up when the project is deleted.
 - **`tests/test.bats`**  
   A test script to verify that the Tailscale integration is working correctly.
+- **`README_DEBUG.md`**
+  Provides detailed instructions on how to debug the GitHub Actions test suite using `tmate`.
 - **GitHub Actions (`.github/workflows/tests.yml`)**  
-  Automates testing to ensure functionality on every push.
+  Automates testing to ensure functionality on every push and on a schedule.
+- **Issue and PR Templates (`.github/`)**
+  Templates for filing bug reports, feature requests, and submitting pull requests to streamline contributions.
 
 ## Getting Started
+
+> [!WARNING]
+> This add-on is only supported on Linux and Windows (WSL2). It is not compatible with macOS or systems with an `arm64` architecture (like Apple Silicon).
 
 ### 1. Install DDEV and Tailscale
 
@@ -44,10 +53,12 @@ ddev restart
 
 ### 3. Authenticate with Tailscale
 
-Obtain an [auth key](https://tailscale.com/kb/1085/auth-keys/) and set it in your environment:
+After installation, a `.ddev/.env.tailscale-router` file is created in your project. You need to add your Tailscale auth key to this file.
+
+Obtain an auth key (e.g., an ephemeral, reusable key) and set it using the `ddev dotenv` command:
 
 ```bash
-ddev config global --env-add TAILSCALE_AUTHKEY=your_auth_key
+ddev dotenv .ddev/.env.tailscale-router TS_AUTHKEY=your_auth_key
 ```
 
 Then restart DDEV:
@@ -56,7 +67,24 @@ Then restart DDEV:
 ddev restart
 ```
 
-### 4. Access Your DDEV Sites Securely
+### 4. Configure Share Privacy (Optional) 
+By default, this add-on creates a private share, accessible only by you. You can change this to a public share (accessible to anyone in your Tailnet) by setting the TS_PRIVACY environment variable. 
+
+* To enable public sharing: 
+
+  ```bash
+  ddev dotenv --file .ddev/.env.tailscale-router TS_PRIVACY=public
+  ```
+
+* To switch back to private sharing (the default): 
+
+  ```bash
+  ddev dotenv --file .ddev/.env.tailscale-router TS_PRIVACY=private
+  ```
+
+Remember to ddev restart after changing this setting for it to take effect. 
+
+### 5. Access Your DDEV Sites Securely
 
 Once connected to Tailscale, use the **Tailscale-assigned IP** of your DDEV environment to access your local development sites securely from any connected device.
 
@@ -83,7 +111,7 @@ Contributions are welcome! If you have suggestions, bug reports, or feature requ
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
 
 ---
 

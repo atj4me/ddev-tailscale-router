@@ -1,5 +1,17 @@
 #!/usr/bin/env bats
 
+# Bats is a testing framework for Bash
+# Documentation https://bats-core.readthedocs.io/en/stable/
+# Bats libraries documentation https://github.com/ztombol/bats-docs
+
+# For local tests, install bats-core, bats-assert, bats-file, bats-support
+# And run this in the add-on root directory:
+#   bats ./tests/test.bats
+# To exclude release tests:
+#   bats ./tests/test.bats --filter-tags '!release'
+# For debugging:
+#   bats ./tests/test.bats --show-output-of-passing-tests --verbose-run --print-output-on-failure
+
 setup() {
   set -eu -o pipefail
   export GITHUB_REPO=ddev/ddev-tailscale-router
@@ -12,14 +24,10 @@ setup() {
 
   export DIR="$(cd "$(dirname "${BATS_TEST_FILENAME}")/.." >/dev/null 2>&1 && pwd)"
   export PROJNAME="test-$(basename "${GITHUB_REPO}")"
-  
-  # Safe temporary directory creation
   mkdir -p ~/tmp
-  export TESTDIR=$(mktemp -d -t "${PROJNAME}.XXXXXX")
-
+  export TESTDIR=$(mktemp -d ~/tmp/${PROJNAME}.XXXXXX)
   export DDEV_NONINTERACTIVE=true
   export DDEV_NO_INSTRUMENTATION=true
-
   ddev delete -Oy "${PROJNAME}" >/dev/null 2>&1 || true
   cd "${TESTDIR}"
   run ddev config --project-name="${PROJNAME}" --project-tld=ddev.site
@@ -34,7 +42,7 @@ health_checks() {
   assert_success
 
   # Check if Tailscale service logs indicate success
-  run docker logs ddev-${PROJNAME}-tailscale-router 2>&1 | grep -q "Tailscale is up" || docker logs ddev-${PROJNAME}-tailscale-router
+  run ddev logs tailscale-router 2>&1 | grep -q "Tailscale is up" || ddev logs tailscale-router
   assert_success
 
   # Verify internet connectivity
@@ -50,11 +58,12 @@ health_checks() {
 teardown() {
   set -eu -o pipefail
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1
-  if [ -n "${TESTDIR:-}" ]; then
-    # Ensure we have permission to delete everything
-    sudo chmod -R u+w "${TESTDIR}" 2>/dev/null || true
-    sudo chown -R $(whoami) "${TESTDIR}" 2>/dev/null || true
-    rm -rf "${TESTDIR}"
+  # Persist TESTDIR if running inside GitHub Actions. Useful for uploading test result artifacts
+  # See example at https://github.com/ddev/github-action-add-on-test#preserving-artifacts
+  if [ -n "${GITHUB_ENV:-}" ]; then
+    [ -e "${GITHUB_ENV:-}" ] && echo "TESTDIR=${HOME}/tmp/${PROJNAME}" >> "${GITHUB_ENV}"
+  else
+    [ "${TESTDIR}" != "" ] && rm -rf "${TESTDIR}"
   fi
 }
 
