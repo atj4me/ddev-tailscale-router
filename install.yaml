@@ -28,4 +28,7 @@ removal_actions:
 
 post_install_actions:
   - |
-    #ddev-description: ** Add the Tailscale API Key to .env.tailscale-router **
+    #ddev-description:Checking if TAILSCALE_API_KEY is still a placeholder
+    if grep -q 'your-api-key-here' .env.tailscale-router; then
+      echo "WARNING: You must set TAILSCALE_API_KEY in .ddev/.env.tailscale-router!"
+    fi
