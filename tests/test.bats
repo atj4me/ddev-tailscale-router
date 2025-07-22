@@ -42,7 +42,7 @@ health_checks() {
   assert_success
 
   # Check if Tailscale service logs indicate success
-  run ddev logs tailscale-router 2>&1 | grep -q "Tailscale is up" || ddev logs tailscale-router
+  run ddev logs ${PROJNAME} 2>&1 | grep -q "Tailscale is up" || ddev logs ${PROJNAME}
   assert_success
 
   # Verify internet connectivity
