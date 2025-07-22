@@ -28,5 +28,4 @@ removal_actions:
 
 post_install_actions:
   - |
-    #ddev-description: Run Tailscale cert for TS_CERT_DOMAIN
-    tailscale cert ${TS_CERT_DOMAIN}
+    #ddev-description: ** Add the Tailscale API Key to .env.tailscale-router **
