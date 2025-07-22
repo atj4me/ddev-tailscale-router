@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-UPSTREAM=https://github.com/ddev/ddev-addon-template/blob/main
+UPSTREAM=https://github.com/atj4me/ddev-tailscale-router/blob/main
 
 # List to store actions
 actions=()
