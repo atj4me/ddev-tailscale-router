@@ -14,14 +14,11 @@ services:
           ARG DDEV_UID
           ARG DDEV_GID
           RUN <<EOF
-            set -eu
+           set -eu
             apk add --no-cache socat
             addgroup -g $${DDEV_GID} $${DDEV_USER}
             adduser -D -H -u $${DDEV_UID} -G $${DDEV_USER} -s /bin/sh $${DDEV_USER}
-            mkdir -p /var/lib/tailscale
-            chown $${DDEV_USER}:$${DDEV_USER} /var/lib/tailscale
           EOF
-          USER $${DDEV_USER}
       devices:
         - /dev/net/tun:/dev/net/tun
       hostname: ${DDEV_SITENAME}
