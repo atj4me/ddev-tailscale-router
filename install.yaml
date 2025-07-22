@@ -16,13 +16,15 @@ pre_install_actions:
 
 project_files:
   - .env.tailscale-router
-  - tailscale
+  - tailscale-router
   - docker-compose.ddev-tailscale-router.yaml
 
 ddev_version_constraint: '>= v1.24.2'
 
 removal_actions:
   - rm -f ${DDEV_APPROOT}/.ddev/docker-compose.ddev-tailscale-router.yaml
+  - rm -rf ${DDEV_APPROOT}/.ddev/.env.tailscale-router
+  - rm -rf ${DDEV_APPROOT}/.ddev/tailscale-router
 
 post_install_actions:
   - |
