@@ -1,18 +1,33 @@
 #ddev-generated
-version: '3.7'
-
 services:
   ddev-tailscale-router:
-    image: tailscale/tailscale:latest
-    environment:
-      - TS_AUTHKEY=${TS_AUTHKEY}
-      - TS_HOSTNAME=${DDEV_PROJECT_NAME}
-      - TS_SERVE_CONFIG=/config/serve.json
-    volumes:
-      - ./tailscale-state:/var/lib/tailscale
-      - ./tailscale-config:/config
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun
-    restart: unless-stopped
+      image: tailscale/tailscale:latest
+      hostname: ${DDEV_SITENAME}
+      container_name: ${DDEV_SITENAME}-tailscale-router
+      environment:
+        - TS_AUTHKEY=${TS_AUTHKEY}
+        - TS_HOSTNAME=${DDEV_SITENAME}
+        - TS_EXTRA_ARGS=--accept-routes --ssh
+        - TS_STATE_DIR=/var/lib/tailscale
+        - TS_SERVE_CONFIG=/config/funnel.json
+        - TS_USERSPACE=false
+        - TS_PRIVACY=${TS_PRIVACY:-private}
+      volumes:
+        - ./tailscale/state:/var/lib/tailscale
+        - ./tailscale/config:/config
+        - ./tailscale/scripts:/scripts
+        - ./tailscale/certs:/etc/ssl/certs:ro   # Replace as needed
+        - .:/mnt/ddev_config
+        - ddev-global-cache:/mnt/ddev-global-cache
+      devices:
+        - /dev/net/tun:/dev/net/tun
+      cap_add:
+        - NET_ADMIN
+      restart: unless-stopped
+      labels:
+        com.ddev.site-name: ${DDEV_SITENAME}
+        com.ddev.approot: ${DDEV_APPROOT}
+      depends_on:
+        - web
+      post_start:
+       - command: ["sh", "-c", "apk add --no-cache socat && socat TCP-LISTEN:80,reuseaddr,fork TCP:${DDEV_SITENAME}-web:80 &"]
