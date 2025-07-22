@@ -3,7 +3,7 @@ services:
   ddev-tailscale-router:
       image: tailscale/tailscale:latest
       hostname: ${DDEV_SITENAME}
-      container_name: ${DDEV_SITENAME}-tailscale-router
+      container_name: ddev-${DDEV_SITENAME}-tailscale-router
       environment:
         - TS_AUTHKEY=${TS_AUTHKEY}
         - TS_HOSTNAME=${DDEV_SITENAME}
