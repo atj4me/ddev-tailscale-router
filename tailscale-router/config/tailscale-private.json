@@ -1,5 +1,5 @@
 {
-    "_comment": "#ddev-generated",
+    "#ddev-generated":true,
     "TCP": {
       "443": {
         "HTTPS": true
