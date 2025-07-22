@@ -23,3 +23,8 @@ ddev_version_constraint: '>= v1.24.2'
 
 removal_actions:
   - rm -f ${DDEV_APPROOT}/.ddev/docker-compose.ddev-tailscale-router.yaml
+
+post_install_actions:
+  - |
+    #ddev-description: Run Tailscale cert for TS_CERT_DOMAIN
+    tailscale cert ${TS_CERT_DOMAIN}
