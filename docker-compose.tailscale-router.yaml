@@ -12,10 +12,10 @@ services:
         - TS_SERVE_CONFIG=/config/funnel.json
         - TS_USERSPACE=false
         - TS_PRIVACY=${TS_PRIVACY:-private}
-        - TS_SERVE_CONFIG=${TS_SERVE_CONFIG:-/config/tailscale.json}
+        - TS_SERVE_CONFIG=/config/tailscale-${TS_SERVE_CONFIG}.json
       volumes:
         - ./tailscale-router/state:/var/lib/tailscale
-        - ./tailscale-router/config/tailscale-${TS_PRIVACY:-private}.json:/config/tailscale.json:ro
+        - ./tailscale-router/config:/config
         - ./tailscale-router/scripts:/scripts
         - .:/mnt/ddev_config
         - ddev-global-cache:/mnt/ddev-global-cache
