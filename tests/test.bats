@@ -30,7 +30,7 @@ setup() {
 
 health_checks() {
   # Check if the Tailscale service is running inside DDEV
-  run ddev describe | grep -q "ddev-${PROJNAME}-tailscale-router"
+  run ddev describe | grep -q "tailscale-router"
   assert_success
 
   # Check if Tailscale service logs indicate success
