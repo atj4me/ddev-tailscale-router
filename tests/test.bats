@@ -55,6 +55,9 @@ teardown() {
   set -eu -o pipefail
   ddev delete -Oy ${PROJNAME} >/dev/null 2>&1
   if [ -n "${TESTDIR:-}" ]; then
+    # Ensure we have permission to delete everything
+    sudo chmod -R u+w "${TESTDIR}" 2>/dev/null || true
+    sudo chown -R $(whoami) "${TESTDIR}" 2>/dev/null || true
     rm -rf "${TESTDIR}"
   fi
 }
