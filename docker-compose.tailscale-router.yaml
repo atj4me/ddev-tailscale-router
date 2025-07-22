@@ -15,7 +15,7 @@ services:
         - TS_SERVE_CONFIG=${TS_SERVE_CONFIG:-/config/tailscale.json}
       volumes:
         - ./tailscale-router/state:/var/lib/tailscale
-        - ./tailscale-router/config/tailscale-${TAILSCALE_PRIVACY:-private}.json:/config/tailscale.json:ro
+        - ./tailscale-router/config/tailscale-${TS_PRIVACY:-private}.json:/config/tailscale.json:ro
         - ./tailscale-router/scripts:/scripts
         - .:/mnt/ddev_config
         - ddev-global-cache:/mnt/ddev-global-cache
