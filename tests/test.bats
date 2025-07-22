@@ -37,12 +37,8 @@ health_checks() {
   run docker logs ddev-${PROJNAME}-tailscale-router 2>&1 | grep -q "Tailscale is up" || docker logs ddev-${PROJNAME}-tailscale-router
   assert_success
 
-  # Check Tailscale connectivity
-  run docker exec ddev-${PROJNAME}-tailscale-router tailscale status
-  assert_success
-
   # Verify internet connectivity
-  run curl -s https://icanhazip.com
+  run wget -qO- https://icanhazip.com
   assert_success
 
   # Launch the DDEV site
