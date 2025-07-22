@@ -28,7 +28,7 @@ removal_actions:
 
 post_install_actions:
   - |
-    #ddev-description:Checking if TAILSCALE_API_KEY is still a placeholder
+    #ddev-description:Checking if TS_AUTHKEY is still a placeholder
     if grep -q 'your-api-key-here' .env.tailscale-router; then
-      echo "WARNING: You must set TAILSCALE_API_KEY in .ddev/.env.tailscale-router!"
+      echo "WARNING: You must set TS_AUTHKEY in .ddev/.env.tailscale-router!"
     fi
