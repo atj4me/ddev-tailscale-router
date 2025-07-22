@@ -1,6 +1,6 @@
 #ddev-generated
 services:
-  ddev-tailscale-router:
+  tailscale-router:
       image: tailscale/tailscale:latest
       hostname: ${DDEV_SITENAME}
       container_name: ddev-${DDEV_SITENAME}-tailscale-router
@@ -12,11 +12,11 @@ services:
         - TS_SERVE_CONFIG=/config/funnel.json
         - TS_USERSPACE=false
         - TS_PRIVACY=${TS_PRIVACY:-private}
+        - TS_SERVE_CONFIG=${TS_SERVE_CONFIG:-/config/tailscale.json}
       volumes:
-        - ./tailscale/state:/var/lib/tailscale
-        - ./tailscale/config:/config
-        - ./tailscale/scripts:/scripts
-        - ./tailscale/certs:/etc/ssl/certs:ro   # Replace as needed
+        - ./tailscale-router/state:/var/lib/tailscale
+        - ./tailscale-router/config/tailscale-${TAILSCALE_PRIVACY:-private}.json:/config/tailscale.json:ro
+        - ./tailscale-router/scripts:/scripts
         - .:/mnt/ddev_config
         - ddev-global-cache:/mnt/ddev-global-cache
       devices:
@@ -31,3 +31,4 @@ services:
         - web
       post_start:
        - command: ["sh", "-c", "apk add --no-cache socat && socat TCP-LISTEN:80,reuseaddr,fork TCP:${DDEV_SITENAME}-web:80 &"]
+       - command: ["sh", "-c", "echo 'Tailscale router started' && tailscale status --peers=false"]
