@@ -31,4 +31,3 @@ services:
         - web
       post_start:
        - command: ["sh", "-c", "apk add --no-cache socat && socat TCP-LISTEN:80,reuseaddr,fork TCP:${DDEV_SITENAME}-web:80 &"]
-       - command: ["sh", "-c", "echo 'Tailscale router started' && tailscale status --peers=false"]
