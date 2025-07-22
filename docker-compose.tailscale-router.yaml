@@ -22,6 +22,8 @@ services:
             chown $${DDEV_USER}:$${DDEV_USER} /var/lib/tailscale
           EOF
           USER $${DDEV_USER}
+      devices:
+        - /dev/net/tun:/dev/net/tun
       hostname: ${DDEV_SITENAME}
       container_name: ddev-${DDEV_SITENAME}-tailscale-router
       environment:
