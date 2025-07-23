@@ -14,7 +14,7 @@
 
 setup() {
   set -eu -o pipefail
-  export GITHUB_REPO=ddev/ddev-tailscale-router
+  export GITHUB_REPO=atj4me/ddev-tailscale-router
 
   TEST_BREW_PREFIX="$(brew --prefix 2>/dev/null || true)"
   export BATS_LIB_PATH="${BATS_LIB_PATH}:${TEST_BREW_PREFIX}/lib:/usr/lib/bats"
