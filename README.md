@@ -28,8 +28,6 @@ With this setup, your development sites become accessible over Tailscale's secur
   This directory is copied into your project's `.ddev/tailscale-router/` directory. It contains the JSON configuration files for Tailscale's `serve` command, controlling whether the share is private or public. The Tailscale state is managed in a dedicated Docker volume, which is automatically cleaned up when the project is deleted.
 - **`tests/test.bats`**  
   A test script to verify that the Tailscale integration is working correctly.
-- **`README_DEBUG.md`**
-  Provides detailed instructions on how to debug the GitHub Actions test suite using `tmate`.
 - **GitHub Actions (`.github/workflows/tests.yml`)**  
   Automates testing to ensure functionality on every push and on a schedule.
 - **Issue and PR Templates (`.github/`)**
