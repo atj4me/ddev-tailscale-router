@@ -31,7 +31,6 @@ services:
         - tailscale-router-state:/var/lib/tailscale
         - ./tailscale-router/config:/config
         - .:/mnt/ddev_config
-        - tailscale-certs:/etc/ssl/certs
         - ddev-global-cache:/mnt/ddev-global-cache
       restart: unless-stopped
       labels:
@@ -44,4 +43,3 @@ services:
        
 volumes:
   tailscale-router-state:
-  tailscale-certs:
