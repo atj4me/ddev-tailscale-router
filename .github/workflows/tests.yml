@@ -39,8 +39,10 @@ jobs:
           brew install lima
           brew install docker
           limactl create --name=default --vm-type=vz --mount-type=virtiofs --mount-writable --memory=6 --cpus=4 --disk=100 template://docker
+          limactl start default
           docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock"
           docker context use lima-default
+          imactl list
       - name: Run DDEV Add-on Tests
         uses: ddev/github-action-add-on-test@v2
         with:
