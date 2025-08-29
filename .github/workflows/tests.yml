@@ -39,8 +39,7 @@ jobs:
           brew install lima lima-additional-guestagents
           mkdir -p /tmp/lima
           # Use qemu VM driver instead of vz to avoid current vz issues
-          limactl create --name=default --vm-type=qemu --cpu=host --memory=4 --cpus=2 --mount-type=9p ... template://docker
-
+          limactl create --name=default --vm-type=qemu --cpus=2 --memory=4 --mount-type=9p template://docker
           if limactl list | grep -q default; then
             limactl delete default
           fi
