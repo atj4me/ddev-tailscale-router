@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         ddev_version: [stable, HEAD]
-        os: [ubuntu-24.04, ubuntu-24.04-arm64]
+        os: [ubuntu-24.04, ubuntu-22.04-arm, windows-11-arm]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
