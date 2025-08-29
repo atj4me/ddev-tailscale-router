@@ -34,14 +34,14 @@ jobs:
 
     steps:
       - name: Install Homebrew on MacOS
-          if: startsWith(matrix.os, 'macos-latest')
-          run: |
-            brew install lima
-            brew install docker
-            limactl create --name=default --vm-type=vz --mount-type=virtiofs --mount-writable --memory=6 --cpus=4 --disk=100 template://docker
-            docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock"
-            docker context use lima-default
-            limactl start
+        if: startsWith(matrix.os, 'macos-latest')
+        run: |
+          brew install lima
+          brew install docker
+          limactl create --name=default --vm-type=vz --mount-type=virtiofs --mount-writable --memory=6 --cpus=4 --disk=100 template://docker
+          docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock"
+          docker context use lima-default
+          limactl start
       - name: Run DDEV Add-on Tests
         uses: ddev/github-action-add-on-test@v2
         with:
