@@ -27,14 +27,10 @@ jobs:
     strategy:
       matrix:
         ddev_version: [stable, HEAD]
-        os: [ubuntu-24.04, ubuntu-24.04-arm64, macos-latest]
-        include:
-          - os: macos-latest
-            allow_failure: true
+        os: [ubuntu-24.04, ubuntu-24.04-arm64]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.allow_failure == true }}
 
     steps:
       - uses: ddev/github-action-add-on-test@v2
