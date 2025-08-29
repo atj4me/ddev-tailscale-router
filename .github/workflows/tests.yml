@@ -40,10 +40,6 @@ jobs:
           mkdir -p /tmp/lima
           # Use qemu VM driver instead of vz to avoid current vz issues
           limactl create --name=default --vm-type=qemu --cpus=2 --memory=4 --mount-type=9p template://docker
-          if limactl list | grep -q default; then
-            limactl delete default
-          fi
-          limactl start default
           docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock" || true
           docker context use lima-default
           limactl list
