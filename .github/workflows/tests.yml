@@ -31,34 +31,23 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Enable Actions step debug logging
-        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
-      
-      - name: Setup Debug Session (tmate SSH)
-        uses: csexton/debugger-action@master
-        if: ${{ github.event.inputs.debug_enabled == 'true' }}
-      
-      - name: Setup Lima, Docker, and QEMU
+      - name: Set up on macOS runners
+        if: startsWith(matrix.os, 'macos-latest')
         run: |
           brew update
-          brew install lima lima-additional-guestagents docker qemu
+          brew install lima docker qemu
+          brew install lima lima-additional-guestagents
           mkdir -p /tmp/lima
+          # Use qemu VM driver instead of vz to avoid current vz issues
+          limactl create --name=default --vm-type=qemu --cpu=host --memory=4 --cpus=2 --mount-type=9p ... template://docker
+
           if limactl list | grep -q default; then
             limactl delete default
           fi
-          limactl create --name=default --vm-type=qemu --mount-type=9p --mount-writable --memory=6 --cpus=4 --disk=100 template://docker
           limactl start default
           docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock" || true
           docker context use lima-default
           limactl list
-      
-      - name: Dump Lima logs for debugging
-        if: failure()
-        run: |
-          echo "HA stderr log:"
-          cat ~/.lima/default/ha.stderr.log || echo "No ha.stderr.log available"
-          echo "Serial logs:"
-          cat ~/.lima/default/serial*.log || echo "No serial logs available"
 
       - name: Run DDEV Add-on Tests
         uses: ddev/github-action-add-on-test@v2
