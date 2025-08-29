@@ -45,7 +45,7 @@ jobs:
           if limactl list | grep -q default; then
             limactl delete default
           fi
-          limactl create --name=default --vm-type=vz --mount-type=virtiofs --mount-writable --memory=6 --cpus=4 --disk=100 template://docker
+          limactl create --name=default --vm-type=qemu --mount-type=virtiofs --mount-writable --memory=6 --cpus=4 --disk=100 template://docker
           
           # Start the lima VM instance
           limactl start default
