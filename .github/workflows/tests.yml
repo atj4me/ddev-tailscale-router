@@ -33,7 +33,25 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: ddev/github-action-add-on-test@v2
+      - name: Install Homebrew on Linux
+        if: startsWith(matrix.os, 'ubuntu-22.04-arm')
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential curl file git -y
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+      - name: Install Homebrew on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Homebrew/install/HEAD/install.ps1 -OutFile install.ps1
+          .\install.ps1
+        shell: pwsh
+
+      - name: Run DDEV Add-on Tests
+        uses: ddev/github-action-add-on-test@v2
         with:
           ddev_version: ${{ matrix.ddev_version }}
           token: ${{ secrets.GITHUB_TOKEN }}
