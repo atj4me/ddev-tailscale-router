@@ -35,14 +35,20 @@ jobs:
         if: startsWith(matrix.os, 'macos-latest')
         run: |
           brew update
-          brew install lima docker qemu
-          brew install lima lima-additional-guestagents
+          brew install lima lima-additional-guestagents docker qemu
           mkdir -p /tmp/lima
-          # Use qemu VM driver instead of vz to avoid current vz issues
-          limactl create --name=default --vm-type=qemu --mount-type=9p --mount-writable --memory=6 --cpus=4 --disk=100 template://docker
           if limactl list | grep -q default; then
             limactl delete default
           fi
+          limactl create \
+            --name=default \
+            --vm-type=qemu \
+            --mount-type=9p \
+            --mount-writable \
+            --memory=6 \
+            --cpus=4 \
+            --disk=100 \
+            template://docker
           limactl start default
           docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock" || true
           docker context use lima-default
