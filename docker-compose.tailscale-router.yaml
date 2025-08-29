@@ -4,15 +4,8 @@ services:
       # We build a custom image to add socat
       build:
         context: .
-        args:
-          - DDEV_UID=${DDEV_UID}
-          - DDEV_GID=${DDEV_GID}
-          - DDEV_USER=ddev
         dockerfile_inline: |
           FROM tailscale/tailscale:latest
-          ARG DDEV_USER
-          ARG DDEV_UID
-          ARG DDEV_GID
           RUN <<EOF
            set -eu
             apk add --no-cache socat

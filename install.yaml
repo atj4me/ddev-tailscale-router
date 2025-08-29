@@ -1,13 +1,5 @@
 name: ddev-tailscale-router
 
-pre_install_actions:
-  - |
-    #ddev-description: Check architecture type for incompatible arm64 type
-    if [ "$(uname -m)" = "arm64" -o "$(uname -m)" = "aarch64" ]; then
-      echo "This package does not work on arm64 (Apple Silicon) machines";
-      exit 1;
-    fi
-
 project_files:
   - .env.tailscale-router
   - tailscale-router/config/tailscale-private.json
