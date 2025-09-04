@@ -1,38 +1,34 @@
 #ddev-generated
 services:
   tailscale-router:
-      # We build a custom image to add socat
-      build:
-        context: .
-        dockerfile_inline: |
-          FROM tailscale/tailscale:latest
-          RUN <<EOF
-           set -eu
-            apk add --no-cache socat
-          EOF
-      hostname: ${DDEV_SITENAME}
-      container_name: ddev-${DDEV_SITENAME}-tailscale-router
-      environment:
-        - TS_AUTHKEY=${TS_AUTHKEY}
-        - TS_HOSTNAME=${DDEV_SITENAME}
-        - TS_EXTRA_ARGS=--accept-routes --ssh
-        - TS_STATE_DIR=/var/lib/tailscale
-        - TS_USERSPACE=true
-        - TS_PRIVACY=${TS_PRIVACY:-private}
-        - TS_SERVE_CONFIG=/config/tailscale-${TS_PRIVACY}.json
-      volumes:
-        - tailscale-router-state:/var/lib/tailscale
-        - ./tailscale-router/config:/config
-        - .:/mnt/ddev_config
-        - ddev-global-cache:/mnt/ddev-global-cache
-      restart: unless-stopped
-      labels:
-        com.ddev.site-name: ${DDEV_SITENAME}
-        com.ddev.approot: ${DDEV_APPROOT}
-      depends_on:
-        - web
-      post_start:
-       - command: ["sh", "-c", "socat TCP-LISTEN:8080,reuseaddr,fork TCP:web:${DDEV_ROUTER_HTTP_PORT} >> /var/log/ddev.log 2>&1 &"]
-       
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM tailscale/tailscale:latest
+        RUN apk add --no-cache socat
+    hostname: ${DDEV_SITENAME}
+    container_name: ddev-${DDEV_SITENAME}-tailscale-router
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_HOSTNAME: ${DDEV_SITENAME}
+      TS_EXTRA_ARGS: --accept-routes --ssh
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_PRIVACY: ${TS_PRIVACY:-private}
+      TS_SERVE_CONFIG: /config/tailscale-${TS_PRIVACY}.json
+    volumes:
+      - tailscale-router-state:/var/lib/tailscale
+      - ./tailscale-router/config:/config:ro
+      - .:/mnt/ddev_config
+      - ddev-global-cache:/mnt/ddev-global-cache
+    restart: unless-stopped
+    labels:
+      com.ddev.site-name: ${DDEV_SITENAME}
+      com.ddev.approot: ${DDEV_APPROOT}
+    depends_on:
+      - web
+    post_start:
+      - command: ["sh", "-c", "socat TCP-LISTEN:8080,reuseaddr,fork TCP:web:${DDEV_ROUTER_HTTP_PORT} >> /var/log/ddev.log 2>&1 &"]
+
 volumes:
   tailscale-router-state:
