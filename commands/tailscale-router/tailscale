@@ -11,6 +11,9 @@ if [ "$1" = "stat" ]; then
 elif [ "$1" = "proxy" ]; then
   tailscale funnel status
   exit 0
+elif [ "$1" = "url" ]; then
+  tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1
+  exit 0
 else
   tailscale "$@"
 fi

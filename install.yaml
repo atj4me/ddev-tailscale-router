@@ -1,7 +1,6 @@
 name: ddev-tailscale-router
 
 project_files:
-  - .env.tailscale-router
   - tailscale-router/config/tailscale-private.json
   - tailscale-router/config/tailscale-public.json
   - docker-compose.tailscale-router.yaml
@@ -11,7 +10,11 @@ ddev_version_constraint: '>= v1.24.3'
 
 post_install_actions:
   - |
-    #ddev-description:Checking if TS_AUTHKEY is still a placeholder
-    if grep -q 'your-api-key-here' .env.tailscale-router; then
-      echo "WARNING: You must set TS_AUTHKEY in .ddev/.env.tailscale-router!"
-    fi
+    #ddev-description:Setup instructions for Tailscale router
+    echo "\n🚀 ddev-tailscale-router installed successfully!"
+    echo "\nNext steps:"
+    echo "1. Get your Tailscale auth key from https://tailscale.com/kb/1085/auth-keys"
+    echo "2. Set it using: ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-xxxx"
+    echo "3. Optional: Set privacy with: ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=public"
+    echo "4. Run: ddev restart"
+    echo "\nFor more info: https://github.com/atj4me/ddev-tailscale-router"
