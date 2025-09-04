@@ -1,0 +1,16 @@
+#ddev-generated
+#!/usr/bin/env sh
+
+## Description: Tail the main solr log
+## Usage: tailscale [args...]
+## Example: ddev tailscale [args...]
+
+if [ "$1" = "stat" ]; then
+  tailscale status --self --peers=false --active=true
+  exit 0
+elif [ "$1" = "proxy" ]; then
+  tailscale funnel status
+  exit 0
+else
+  tailscale "$@"
+fi

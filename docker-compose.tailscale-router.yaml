@@ -4,23 +4,12 @@ services:
       # We build a custom image to add socat
       build:
         context: .
-        args:
-          - DDEV_UID=${DDEV_UID}
-          - DDEV_GID=${DDEV_GID}
-          - DDEV_USER=ddev
         dockerfile_inline: |
           FROM tailscale/tailscale:latest
-          ARG DDEV_USER
-          ARG DDEV_UID
-          ARG DDEV_GID
           RUN <<EOF
            set -eu
             apk add --no-cache socat
-            addgroup -g $${DDEV_GID} $${DDEV_USER}
-            adduser -D -H -u $${DDEV_UID} -G $${DDEV_USER} -s /bin/sh $${DDEV_USER}
           EOF
-      devices:
-        - /dev/net/tun:/dev/net/tun
       hostname: ${DDEV_SITENAME}
       container_name: ddev-${DDEV_SITENAME}-tailscale-router
       environment:
@@ -28,7 +17,7 @@ services:
         - TS_HOSTNAME=${DDEV_SITENAME}
         - TS_EXTRA_ARGS=--accept-routes --ssh
         - TS_STATE_DIR=/var/lib/tailscale
-        - TS_USERSPACE=false
+        - TS_USERSPACE=true
         - TS_PRIVACY=${TS_PRIVACY:-private}
         - TS_SERVE_CONFIG=/config/tailscale-${TS_PRIVACY}.json
       volumes:
@@ -36,8 +25,6 @@ services:
         - ./tailscale-router/config:/config
         - .:/mnt/ddev_config
         - ddev-global-cache:/mnt/ddev-global-cache
-      cap_add:
-        - NET_ADMIN
       restart: unless-stopped
       labels:
         com.ddev.site-name: ${DDEV_SITENAME}
