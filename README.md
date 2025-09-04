@@ -42,7 +42,7 @@ Before installing the add-on:
 
 - **`install.yaml`** - DDEV add-on installation manifest that copies necessary files and shows setup instructions
 - **`docker-compose.tailscale-router.yaml`** - Core Docker Compose configuration defining the `tailscale-router` service with Tailscale authentication and `socat` traffic forwarding
-- **`commands/tailscale-router/tailscale`** - Custom DDEV command providing access to Tailscale CLI with helpful shortcuts
+- **`commands/host/tailscale`** - Custom DDEV host command providing access to Tailscale CLI with helpful shortcuts
 - **`tailscale-router/config/`** - JSON configuration files for Tailscale's serve command:
   - `tailscale-private.json` - Private sharing configuration (default)
   - `tailscale-public.json` - Public sharing configuration
