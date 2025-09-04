@@ -5,6 +5,7 @@ project_files:
   - tailscale-router/config/tailscale-public.json
   - docker-compose.tailscale-router.yaml
   - commands/tailscale-router/tailscale
+  - commands/host/tailscale
 
 ddev_version_constraint: '>= v1.24.3'
 

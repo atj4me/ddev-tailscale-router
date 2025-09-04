@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+## #ddev-generated: If you want to edit and own this file, remove this line.
+## Description: Launch a browser with the Tailscale URL
+## Usage: tailscale [launch]
+## Example: "ddev tailscale launch"
+
+if [ "$1" = "launch" ] || [ $# -eq 0 ]; then
+    TAILSCALE_URL=$(ddev tailscale url)
+    ddev launch "$TAILSCALE_URL"
+else
+    echo "Usage: ddev tailscale launch"
+    echo "Launch your project's Tailscale URL in browser"
+fi
