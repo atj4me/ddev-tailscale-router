@@ -31,13 +31,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Set up on macOS runners
+      - name: Set up Docker on macOS
         if: startsWith(matrix.os, 'macos-latest')
         run: |
-          brew install --cask docker
-          sudo /Applications/Docker.app/Contents/MacOS/Docker --unattended --install-privileged-components
-          open -a Docker
-          while ! docker system info &>/dev/null; do sleep 1; done
+          # Use colima as lightweight Docker alternative
+          brew install colima docker
+          colima start
+          docker context use colima
 
       - name: Set up on Linux ARM runners
         if: startsWith(matrix.os, 'ubuntu-22.04-arm')

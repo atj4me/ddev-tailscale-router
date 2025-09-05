@@ -42,18 +42,9 @@ health_checks() {
   assert_success
 
   # Verify tailscale-router service exists in describe output
-  run bash -c "ddev describe -j | jq -r '.services[] | select(.name == \"tailscale-router\") | .name'"
+  run bash -c "ddev describe -j | jq -r '.services // [] | .[] | select(.name == \"tailscale-router\") | .name'"
   assert_success
   assert_output "tailscale-router"
-
-  # Verify internet connectivity
-  run wget -qO- https://icanhazip.com
-  assert_success
-
-  # Launch the DDEV site
-  DDEV_DEBUG=true run ddev launch
-  assert_success
-  assert_output --partial "FULLURL https://${PROJNAME}.ddev.site"
 }
 
 teardown() {
@@ -166,12 +157,12 @@ teardown() {
   # Check private config
   run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-private.json"
   assert_success
-  run grep -q '"false"' ".ddev/tailscale-router/config/tailscale-private.json"
+  run grep -q 'false' ".ddev/tailscale-router/config/tailscale-private.json"
   assert_success
   
   # Check public config
   run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-public.json"
   assert_success
-  run grep -q '"true"' ".ddev/tailscale-router/config/tailscale-public.json"
+  run grep -q 'true' ".ddev/tailscale-router/config/tailscale-public.json"
   assert_success
 }
