@@ -36,7 +36,7 @@ Before installing the add-on:
 
 1. **Install Tailscale** on your development machine: [Download Tailscale](https://tailscale.com/download)
 2. **Add a second device** to your Tailscale network (phone, tablet, or another computer)
-3. **Enable HTTPS** in your [Tailscale admin console](https://login.tailscale.com/admin/dns) by clicking "Enable HTTPS..." (required for TLS certificate generation)
+3. **Enable HTTPS** in your [Tailscale admin console](hhttps://tailscale.com/kb/1153/enabling-https) by clicking "Enable HTTPS..." (required for TLS certificate generation)
 
 ## Components of the Repository
 
@@ -60,7 +60,7 @@ ddev add-on get atj4me/ddev-tailscale-router
 
 ### 2. Get a Tailscale Auth Key
 
-Get an auth key from the [Tailscale admin console](https://login.tailscale.com/admin/settings/keys) (ephemeral, reusable keys are recommended).
+Get an auth key from the [Tailscale admin console](https://tailscale.com/kb/1085/auth-keys) (ephemeral, reusable keys are recommended).
 
 ### 3. Configure the Auth Key
 
