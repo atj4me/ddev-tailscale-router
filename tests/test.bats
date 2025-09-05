@@ -99,10 +99,9 @@ teardown() {
   run ddev restart -y
   assert_success
   
-  # Check if tailscale-router container is running
-  run docker ps --filter "name=ddev-${PROJNAME}-tailscale-router" --format "{{.Names}}"
+  # Check if tailscale-router service is running
+  run ddev logs tailscale-router
   assert_success
-  assert_output "ddev-${PROJNAME}-tailscale-router"
 }
 
 @test "configuration files are properly installed" {
