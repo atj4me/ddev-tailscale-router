@@ -34,9 +34,10 @@ jobs:
       - name: Set up Docker on macOS
         if: startsWith(matrix.os, 'macos-latest')
         run: |
-          brew install colima docker qemu
-          colima start --vm-type=qemu --memory 4 --cpu 2
-          docker context use colima
+          brew install podman
+          podman machine init
+          podman machine start
+          sudo ln -sf $(which podman) /usr/local/bin/docker
 
       - name: Set up on Linux ARM runners
         if: startsWith(matrix.os, 'ubuntu-22.04-arm')
