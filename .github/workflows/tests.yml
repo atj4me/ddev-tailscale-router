@@ -25,24 +25,22 @@ jobs:
     strategy:
       matrix:
         ddev_version: [stable, HEAD]
-        os: [ubuntu-24.04]
+        os: [ubuntu-24.04, ubuntu-22.04-arm]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Set up on macOS runners
-        if: startsWith(matrix.os, 'macos-latest')
+
+      - name: Set up on Linux ARM runners
+        if: startsWith(matrix.os, 'ubuntu-22.04-arm')
         run: |
-          brew update
-          brew install lima docker qemu
-          brew install lima lima-additional-guestagents
-          mkdir -p /tmp/lima
-          # Use qemu VM driver instead of vz to avoid current vz issues
-          limactl create --name=default --vm-type=qemu --cpus=2 --memory=4 --mount-type=9p template://docker
-          docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock" || true
-          docker context use lima-default
-          limactl list
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bashrc
+          brew install --build-from-source mkcert
+          brew install --build-from-source yq
 
       - name: Run DDEV Add-on Tests
         uses: ddev/github-action-add-on-test@v2
@@ -52,21 +50,5 @@ jobs:
           debug_enabled: ${{ github.event.inputs.debug_enabled }}
           addon_repository: ${{ env.GITHUB_REPOSITORY }}
           addon_ref: ${{ env.GITHUB_REF }}
-
-  tests-arm64:
-    runs-on: ubuntu-22.04-arm
-    continue-on-error: true
-    
-    steps:
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: true
-
-      - name: Run DDEV Add-on Tests
-        uses: ddev/github-action-add-on-test@v2
-        with:
-          ddev_version: stable
-          token: ${{ secrets.GITHUB_TOKEN }}
-          addon_repository: ${{ env.GITHUB_REPOSITORY }}
-          addon_ref: ${{ env.GITHUB_REF }}
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
