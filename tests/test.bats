@@ -100,7 +100,7 @@ teardown() {
   assert_success
   
   # Check if tailscale-router container exists
-  run ddev logs tailscale-router 2>&1 | grep -q "Tailscale is up" || ddev logs tailscale-router
+  run docker ps -a --filter "name=ddev-${PROJNAME}-tailscale-router" --format "{{.Names}}"
   assert_success
   assert_output "ddev-${PROJNAME}-tailscale-router"
 }
