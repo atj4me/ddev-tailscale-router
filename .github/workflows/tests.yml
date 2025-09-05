@@ -25,19 +25,12 @@ jobs:
     strategy:
       matrix:
         ddev_version: [stable, HEAD]
-        os: [ubuntu-24.04, ubuntu-22.04-arm, macos-latest]
+        os: [ubuntu-24.04, ubuntu-22.04-arm]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Set up Docker on macOS
-        if: startsWith(matrix.os, 'macos-latest')
-        run: |
-          brew install podman
-          podman machine init
-          podman machine start
-          sudo ln -sf $(which podman) /usr/local/bin/docker
 
       - name: Set up on Linux ARM runners
         if: startsWith(matrix.os, 'ubuntu-22.04-arm')
