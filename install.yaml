@@ -1,24 +1,20 @@
 name: ddev-tailscale-router
 
-pre_install_actions:
-  - |
-    #ddev-description: Check architecture type for incompatible arm64 type
-    if [ "$(uname -m)" = "arm64" -o "$(uname -m)" = "aarch64" ]; then
-      echo "This package does not work on arm64 (Apple Silicon) machines";
-      exit 1;
-    fi
-
 project_files:
-  - .env.tailscale-router
   - tailscale-router/config/tailscale-private.json
   - tailscale-router/config/tailscale-public.json
   - docker-compose.tailscale-router.yaml
+  - commands/host/tailscale
 
 ddev_version_constraint: '>= v1.24.3'
 
 post_install_actions:
   - |
-    #ddev-description:Checking if TS_AUTHKEY is still a placeholder
-    if grep -q 'your-api-key-here' .env.tailscale-router; then
-      echo "WARNING: You must set TS_AUTHKEY in .ddev/.env.tailscale-router!"
-    fi
+    #ddev-description:Setup instructions for Tailscale router
+    echo "🚀 ddev-tailscale-router installed successfully!"
+    echo "Next steps:"
+    echo "1. Get your Tailscale auth key from https://tailscale.com/kb/1085/auth-keys"
+    echo "2. Set it using: ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-xxxx"
+    echo "3. Optional: Set privacy to public with: ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=public"
+    echo "4. Run: ddev restart"
+    echo "For more info: https://github.com/atj4me/ddev-tailscale-router"

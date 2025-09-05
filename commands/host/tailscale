@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+## #ddev-generated: If you want to edit and own this file, remove this line.
+## Description: Tailscale command with launch functionality
+## Usage: tailscale [launch|stat|proxy|url|args...]
+## Example: "ddev tailscale launch"
+
+if [ "$1" = "launch" ] || [ $# -eq 0 ]; then
+    TAILSCALE_URL=$(ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1)
+    
+    if [ -z "$TAILSCALE_URL" ]; then
+        echo "Error: Could not retrieve Tailscale URL."
+        exit 1
+    fi
+    
+    ddev launch "$TAILSCALE_URL"
+elif [ "$1" = "stat" ]; then
+    ddev exec -s tailscale-router tailscale status --self --peers=false --active=true
+elif [ "$1" = "proxy" ]; then
+    ddev exec -s tailscale-router tailscale funnel status
+elif [ "$1" = "url" ]; then
+    ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1
+else
+    ddev exec -s tailscale-router tailscale "$@"
+fi
