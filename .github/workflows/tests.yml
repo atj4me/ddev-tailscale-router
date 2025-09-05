@@ -34,7 +34,7 @@ jobs:
       - name: Set up Docker on macOS
         if: startsWith(matrix.os, 'macos-latest')
         run: |
-          brew install colima docker
+          brew install colima docker qemu
           colima start --vm-type=qemu --memory 4 --cpu 2
           docker context use colima
 
