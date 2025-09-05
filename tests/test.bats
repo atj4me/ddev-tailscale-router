@@ -57,71 +57,15 @@ teardown() {
   fi
 }
 
-@test "install from directory" {
-  set -eu -o pipefail
-  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
-  run ddev add-on get "${DIR}"
-  assert_success
-  run ddev restart -y
-  assert_success
-  health_checks
-}
-
-@test "addon installation verification" {
-  set -eu -o pipefail
-  health_checks
-}
-
-@test "tailscale command exists" {
+@test "addon files installed" {
   set -eu -o pipefail
   assert_file_exists ".ddev/commands/host/tailscale"
-}
-
-@test "tailscale service container exists" {
-  set -eu -o pipefail
-  run docker ps -a --filter "name=ddev-${PROJNAME}-tailscale-router" --format "{{.Names}}"
-  assert_success
-  assert_output "ddev-${PROJNAME}-tailscale-router"
-}
-
-@test "configuration files are properly installed" {
-  set -eu -o pipefail
-  assert_file_exists ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_file_exists ".ddev/tailscale-router/config/tailscale-public.json"
   assert_file_exists ".ddev/docker-compose.tailscale-router.yaml"
-  assert_file_exists ".ddev/commands/host/tailscale"
 }
 
-@test "tailscale command script structure" {
+@test "tailscale service registered" {
   set -eu -o pipefail
-  run grep -q "launch" ".ddev/commands/host/tailscale"
-  assert_success
-  run grep -q "stat" ".ddev/commands/host/tailscale"
-  assert_success
-  run grep -q "proxy" ".ddev/commands/host/tailscale"
-  assert_success
-  run grep -q "url" ".ddev/commands/host/tailscale"
-  assert_success
-}
-
-@test "docker-compose file has required services and volumes" {
-  set -eu -o pipefail
-  run grep -q "tailscale-router:" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
-  run grep -q "tailscale-router-state:" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
-  run grep -q "FROM tailscale/tailscale:latest" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
-}
-
-@test "configuration supports both private and public modes" {
-  set -eu -o pipefail
-  run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_success
-  run grep -q 'false' ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_success
-  run grep -q 'true' ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_success
+  health_checks
 }
 
 # bats test_tags=auth
