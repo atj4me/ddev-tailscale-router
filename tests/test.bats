@@ -42,9 +42,9 @@ health_checks() {
   assert_success
 
   # Verify tailscale-router service exists in describe output
-  run bash -c "ddev describe -j | jq -r '.services // [] | .[] | select(.name == \"tailscale-router\") | .name'"
+  run bash -c "ddev describe -j | jq -r '.raw.services | has(\"tailscale-router\")'"
   assert_success
-  assert_output "tailscale-router"
+  assert_output "true"
 }
 
 teardown() {

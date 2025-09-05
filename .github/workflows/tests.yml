@@ -34,9 +34,8 @@ jobs:
       - name: Set up Docker on macOS
         if: startsWith(matrix.os, 'macos-latest')
         run: |
-          # Use colima as lightweight Docker alternative
           brew install colima docker
-          colima start
+          colima start --vm-type=qemu --memory 4 --cpu 2
           docker context use colima
 
       - name: Set up on Linux ARM runners
