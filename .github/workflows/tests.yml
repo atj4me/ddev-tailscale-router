@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         ddev_version: [stable, HEAD]
-        os: [ubuntu-24.04, ubuntu-22.04-arm]
+        os: [ubuntu-24.04, ubuntu-22.04-arm, macos-latest]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -36,13 +36,12 @@ jobs:
         run: |
           brew update
           brew install lima docker qemu
-          brew install lima lima-additional-guestagents
           mkdir -p /tmp/lima
           # Use qemu VM driver instead of vz to avoid current vz issues
           limactl create --name=default --vm-type=qemu --cpus=2 --memory=4 --mount-type=9p template://docker
+          limactl start default
           docker context create lima-default --docker "host=unix://$HOME/.lima/default/sock/docker.sock" || true
           docker context use lima-default
-          limactl list
 
       - name: Set up on Linux ARM runners
         if: startsWith(matrix.os, 'ubuntu-22.04-arm')
@@ -62,3 +61,5 @@ jobs:
           debug_enabled: ${{ github.event.inputs.debug_enabled }}
           addon_repository: ${{ env.GITHUB_REPOSITORY }}
           addon_ref: ${{ env.GITHUB_REF }}
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
