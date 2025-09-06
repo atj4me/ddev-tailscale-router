@@ -38,7 +38,7 @@ setup() {
 
 health_checks() {
   # Check if the Tailscale service is running inside DDEV
-  run ddev describe -j 
+  run ddev describe -j
   assert_success
 
   # Verify tailscale-router service exists in describe output
@@ -86,7 +86,7 @@ teardown() {
   assert_success
   run ddev restart -y
   assert_success
-  
+
   # Test tailscale command exists (without --help which may not work)
   run ddev tailscale status
   # Command should execute (may show error but shouldn't crash)
@@ -98,7 +98,7 @@ teardown() {
   assert_success
   run ddev restart -y
   assert_success
-  
+
   # Check if tailscale-router container exists
   run docker ps -a --filter "name=ddev-${PROJNAME}-tailscale-router" --format "{{.Names}}"
   assert_success
@@ -109,7 +109,7 @@ teardown() {
   set -eu -o pipefail
   run ddev add-on get "${DIR}"
   assert_success
-  
+
   # Check if config files exist
   assert_file_exists ".ddev/tailscale-router/config/tailscale-private.json"
   assert_file_exists ".ddev/tailscale-router/config/tailscale-public.json"
@@ -123,11 +123,11 @@ teardown() {
   assert_success
   run ddev restart -y
   assert_success
-  
+
   # Test stat command (should not fail even without auth)
   run ddev tailscale stat
   # Command should execute (may show not logged in, but shouldn't crash)
-  
+
   # Test proxy command
   run ddev tailscale proxy
   # Command should execute
@@ -137,15 +137,15 @@ teardown() {
   set -eu -o pipefail
   run ddev add-on get "${DIR}"
   assert_success
-  
+
   # Check docker-compose file contains required elements
   run grep -q "tailscale-router:" ".ddev/docker-compose.tailscale-router.yaml"
   assert_success
-  
+
   run grep -q "tailscale-router-state:" ".ddev/docker-compose.tailscale-router.yaml"
   assert_success
-  
-  run grep -q "FROM tailscale/tailscale:latest" ".ddev/docker-compose.tailscale-router.yaml"
+
+  run grep -q "image: \${TS_DOCKER_IMAGE:-tailscale/tailscale:latest}-\${DDEV_SITENAME}-built" ".ddev/docker-compose.tailscale-router.yaml"
   assert_success
 }
 
@@ -153,13 +153,13 @@ teardown() {
   set -eu -o pipefail
   run ddev add-on get "${DIR}"
   assert_success
-  
+
   # Check private config
   run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-private.json"
   assert_success
   run grep -q 'false' ".ddev/tailscale-router/config/tailscale-private.json"
   assert_success
-  
+
   # Check public config
   run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-public.json"
   assert_success
