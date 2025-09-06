@@ -24,7 +24,7 @@ services:
       - ./tailscale-router/config:/config:ro
       - .:/mnt/ddev_config
       - ddev-global-cache:/mnt/ddev-global-cache
-    restart: unless-stopped
+    restart: "no"
     labels:
       com.ddev.site-name: ${DDEV_SITENAME}
       com.ddev.approot: ${DDEV_APPROOT}
