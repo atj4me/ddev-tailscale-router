@@ -32,8 +32,6 @@ services:
       - web
     post_start:
       - command: ["sh", "-c", "socat TCP-LISTEN:8080,reuseaddr,fork TCP:web:${DDEV_ROUTER_HTTP_PORT} >> /var/log/ddev.log 2>&1 &"]
-    pre_stop:
-      - command: ["tailscale", "logout"]
 
 volumes:
   tailscale-router-state:
