@@ -38,15 +38,24 @@ This add-on is particularly useful for:
 Before installing the add-on:
 
 1. [Install Tailscale](https://tailscale.com/download) on any two devices (computer, phone, or tablet). This is required to generate the auth key.
-2. [Generate an auth key](https://tailscale.com/kb/1085/auth-keys) in your [Keys settings](https://login.tailscale.com/admin/settings/keys) (ephemeral, reusable keys are recommended).
-3. [Enable HTTPS](https://tailscale.com/kb/1153/enabling-https) in your [DNS settings](https://login.tailscale.com/admin/dns) by clicking "Enable HTTPS..." (required for TLS certificate generation).
+2. [Enable HTTPS](https://tailscale.com/kb/1153/enabling-https) in your [DNS settings](https://login.tailscale.com/admin/dns) by clicking "Enable HTTPS..." (required for TLS certificate generation).
+3. [Generate an auth key](https://tailscale.com/kb/1085/auth-keys) in your [Keys settings](https://login.tailscale.com/admin/settings/keys) (ephemeral, reusable keys are recommended).
+
+    Get the auth key and add it to your environment by updating `~/.bashrc`, `~/.zshrc`, or another relevant shell configuration file with this command:
+
+    ```bash
+    echo 'export TS_AUTHKEY=tskey-auth-your-key-here' >> ~/.bashrc
+    ```
+
+    Alternatively, you can set it per project (**NOT RECOMMENDED**, because `.ddev/.env.tailscale-router` is not intended to store secrets) using:
+
+    ```bash
+    ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-your-key-here
+    ```
 
 ## Installation
 
 ```bash
-# get the auth key from prerequisites
-ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-your-key-here
-
 ddev add-on get atj4me/ddev-tailscale-router
 ddev restart
 
@@ -78,22 +87,30 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 
 | Command | Description |
 | ------- | ----------- |
-| `ddev tailscale launch` | Launch your project's Tailscale URL in browser |
 | `ddev tailscale <anything>` | Run any Tailscale CLI command |
+| `ddev tailscale launch` | Launch your project's Tailscale URL in browser |
 | `ddev tailscale status` | Show Tailscale status |
 | `ddev tailscale ping <device>` | Ping a Tailscale device |
 | `ddev tailscale stat` | Show status with self and active peers only |
 | `ddev tailscale proxy` | Show funnel status |
 | `ddev tailscale url` | Get your project's Tailscale URL |
+| `ddev logs -s tailscale-router` | Show logs for the Tailscale router service |
 
 ## Advanced Customization
+
+To change the used Docker image:
+
+```bash
+ddev dotenv set .ddev/.env.tailscale-router --ts-docker-image=tailscale/tailscale:latest
+ddev restart
+```
 
 All customization options (use with caution):
 
 | Variable | Flag | Default |
 | -------- | ---- | ------- |
 | `TS_DOCKER_IMAGE` | `--ts-docker-image` | `tailscale/tailscale:latest` |
-| `TS_AUTHKEY` | `--ts-authkey` | (none, required) |
+| `TS_AUTHKEY` | `--ts-authkey` | (none, required, not recommended to set in `.ddev/.env.tailscale-router`) |
 | `TS_PRIVACY` | `--ts-privacy` | `private` (`private`/`public`) |
 
 ## Components of the Repository
