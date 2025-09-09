@@ -1,4 +1,4 @@
-name: ddev-tailscale-router
+name: tailscale-router
 
 project_files:
   - tailscale-router/config/tailscale-private.json
