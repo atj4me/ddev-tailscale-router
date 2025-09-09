@@ -53,6 +53,19 @@ Before installing the add-on:
     ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-your-key-here
     ```
 
+4. **For public access**: Configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) to enable Funnel. Add the `funnel` node attribute to your ACL policy in the [Tailscale admin console](https://login.tailscale.com/admin/acls):
+
+    ```json
+    {
+      "nodeAttrs": [
+        {
+          "target": ["*"],
+          "attr": ["funnel"]
+        }
+      ]
+    }
+    ```
+
 ## Installation
 
 ```bash
