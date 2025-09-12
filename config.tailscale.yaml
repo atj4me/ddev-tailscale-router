@@ -1,6 +1,9 @@
 #ddev-generated
-
+# This configuration adds Tailscale routing capabilities to the web container.
 web_extra_daemons:
+  - name: tailscale-service
+    command: tailscaled --state=/var/run/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --tun=userspace-networking
+    directory: /var/run/tailscale
   - name: "tailscale-router"
-    command: tailscale up
+    command: tailscale up --authkey=$TS_AUTHKEY --hostname=$TS_HOSTNAME $TS_EXTRA_ARGS 
     directory: /var/www/html
