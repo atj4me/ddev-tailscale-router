@@ -102,6 +102,7 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 | ------- | ----------- |
 | `ddev tailscale <anything>` | Run any Tailscale CLI command |
 | `ddev tailscale launch` | Launch your project's Tailscale URL in browser |
+| `ddev tailscale share` | Share your project publicly via Tailscale Funnel  |
 | `ddev tailscale status` | Show Tailscale status |
 | `ddev tailscale ping <device>` | Ping a Tailscale device |
 | `ddev tailscale stat` | Show status with self and active peers only |
