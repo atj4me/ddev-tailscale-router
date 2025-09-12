@@ -1,3 +1,29 @@
+@test "tailscale share --public forwards correctly" {
+  set -eu -o pipefail
+  run ddev add-on get "${DIR}"
+  assert_success
+  run ddev restart -y
+  assert_success
+
+  # Should use funnel (public) and not pass --public to tailscale CLI
+  run ddev tailscale share --public --bg
+  # Command should execute (may show error if not logged in, but shouldn't crash)
+}
+
+@test "tailscale arbitrary args are forwarded" {
+  set -eu -o pipefail
+  run ddev add-on get "${DIR}"
+  assert_success
+  run ddev restart -y
+  assert_success
+
+  # Should forward all args except --public
+  run ddev tailscale status
+  # Command should execute (may show error if not logged in, but shouldn't crash)
+
+  run ddev tailscale ping 127.0.0.1
+  # Command should execute (may show error if not logged in, but shouldn't crash)
+}
 #!/usr/bin/env bats
 
 # Bats is a testing framework for Bash

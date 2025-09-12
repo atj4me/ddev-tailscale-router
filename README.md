@@ -110,6 +110,38 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 | `ddev tailscale url` | Get your project's Tailscale URL |
 | `ddev logs -s tailscale-router` | Show logs for the Tailscale router service |
 
+You can run any [Tailscale CLI](https://tailscale.com/kb/1080/cli) command directly, and use the special `--public` flag to share via Funnel:
+
+| Command | Description |
+| ------- | ----------- |
+| `ddev tailscale <any tailscale command> [flags]` | Run any Tailscale CLI command (all arguments except `--public` are passed through) |
+| `ddev tailscale launch [--public]` | Launch your project's Tailscale URL in browser (use `--public` for Funnel/public URL) |
+| `ddev tailscale share [--bg] [--public]` | Start sharing your project (use `--public` for Funnel, `--bg` to run in background) |
+| `ddev tailscale stat` | Show status with self and active peers only |
+| `ddev tailscale proxy` | Show funnel status |
+| `ddev tailscale url` | Get your project's Tailscale URL |
+| `ddev tailscale stop` | Stop sharing (turn off serve/funnel) |
+| `ddev logs -s tailscale-router` | Show logs for the Tailscale router service |
+
+**Note:**
+- The `--public` flag is handled by the wrapper and will switch to Tailscale Funnel mode (public sharing). It is not passed to the Tailscale CLI.
+- All other arguments and flags are forwarded to the Tailscale CLI as-is.
+
+**Examples:**
+
+```bash
+# Launch private share (default)
+ddev tailscale launch
+# Launch public share (Funnel)
+ddev tailscale launch --public
+# Start sharing in background (private)
+ddev tailscale share --bg
+# Start sharing in background (public)
+ddev tailscale share --bg --public
+# Run any Tailscale CLI command
+ddev tailscale status
+ddev tailscale ping <device>
+```
 ## Advanced Customization
 
 To change the used Docker image:
