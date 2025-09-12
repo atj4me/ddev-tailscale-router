@@ -1,3 +1,5 @@
+#ddev-generated
+# This Dockerfile installs Tailscale in a web container.
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
 
