@@ -41,10 +41,10 @@ health_checks() {
   run ddev describe -j
   assert_success
 
-  # Verify tailscale-router service exists in describe output
-  run bash -c "ddev describe -j | jq -r '.raw.services | has(\"tailscale-router\")'"
+  # Verify config.tailscale.yaml is in use and web container has tailscale package
+  run bash -c "ddev describe -j | jq -r '.raw.services.web.extra_packages[]? | select(. == \"tailscale\")'"
   assert_success
-  assert_output "true"
+  assert_output "tailscale"
 }
 
 teardown() {
@@ -92,17 +92,20 @@ teardown() {
   # Command should execute (may show error but shouldn't crash)
 }
 
-@test "tailscale service container is running" {
+@test "tailscale daemon is running in web container" {
   set -eu -o pipefail
   run ddev add-on get "${DIR}"
   assert_success
   run ddev restart -y
   assert_success
 
-  # Check if tailscale-router container exists
-  run docker ps -a --filter "name=ddev-${PROJNAME}-tailscale-router" --format "{{.Names}}"
+  # Check if tailscale processes are running in the web container
+  run ddev exec "pgrep -f tailscaled"
   assert_success
-  assert_output "ddev-${PROJNAME}-tailscale-router"
+
+  # Check if tailscale command is available in web container
+  run ddev exec "which tailscale"
+  assert_success
 }
 
 @test "configuration files are properly installed" {
@@ -113,7 +116,7 @@ teardown() {
   # Check if config files exist
   assert_file_exists ".ddev/tailscale-router/config/tailscale-private.json"
   assert_file_exists ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_file_exists ".ddev/docker-compose.tailscale-router.yaml"
+  assert_file_exists ".ddev/config.tailscale.yaml"
   assert_file_exists ".ddev/commands/host/tailscale"
 }
 
@@ -133,19 +136,28 @@ teardown() {
   # Command should execute
 }
 
-@test "docker-compose file has required services and volumes" {
+@test "config.tailscale.yaml has required DDEV configuration" {
   set -eu -o pipefail
   run ddev add-on get "${DIR}"
   assert_success
 
-  # Check docker-compose file contains required elements
-  run grep -q "tailscale-router:" ".ddev/docker-compose.tailscale-router.yaml"
+  # Check config.tailscale.yaml contains required elements
+  run grep -q "webimage_extra_packages:" ".ddev/config.tailscale.yaml"
   assert_success
 
-  run grep -q "tailscale-router-state:" ".ddev/docker-compose.tailscale-router.yaml"
+  run grep -q "tailscale" ".ddev/config.tailscale.yaml"
   assert_success
 
-  run grep -q "image: \${TS_DOCKER_IMAGE:-tailscale/tailscale:latest}-\${DDEV_SITENAME}-built" ".ddev/docker-compose.tailscale-router.yaml"
+  run grep -q "web_extra_daemons:" ".ddev/config.tailscale.yaml"
+  assert_success
+
+  run grep -q "tailscale-router" ".ddev/config.tailscale.yaml"
+  assert_success
+
+  run grep -q "web_extra_volumes:" ".ddev/config.tailscale.yaml"
+  assert_success
+
+  run grep -q "tailscale-router-state" ".ddev/config.tailscale.yaml"
   assert_success
 }
 

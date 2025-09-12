@@ -107,29 +107,21 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 | `ddev tailscale stat` | Show status with self and active peers only |
 | `ddev tailscale proxy` | Show funnel status |
 | `ddev tailscale url` | Get your project's Tailscale URL |
-| `ddev logs -s tailscale-router` | Show logs for the Tailscale router service |
+| `ddev logs` | Show logs for the web container (includes Tailscale daemon) |
 
 ## Advanced Customization
-
-To change the used Docker image:
-
-```bash
-ddev dotenv set .ddev/.env.tailscale-router --ts-docker-image=tailscale/tailscale:latest
-ddev restart
-```
 
 All customization options (use with caution):
 
 | Variable | Flag | Default |
 | -------- | ---- | ------- |
-| `TS_DOCKER_IMAGE` | `--ts-docker-image` | `tailscale/tailscale:latest` |
 | `TS_AUTHKEY` | `--ts-authkey` | (none, required, not recommended to set in `.ddev/.env.tailscale-router`) |
 | `TS_PRIVACY` | `--ts-privacy` | `private` (`private`/`public`) |
 
 ## Components of the Repository
 
 - **`install.yaml`** - DDEV add-on installation manifest that copies necessary files and shows setup instructions
-- **`docker-compose.tailscale-router.yaml`** - Core Docker Compose configuration defining the `tailscale-router` service with Tailscale authentication and `socat` traffic forwarding
+- **`config.tailscale.yaml`** - DDEV configuration defining Tailscale integration as a daemon within the web container, using Tailscale's built-in serve functionality
 - **`commands/host/tailscale`** - Custom DDEV host command providing access to Tailscale CLI with helpful shortcuts
 - **`tailscale-router/config/`** - JSON configuration files for Tailscale's serve command:
   - `tailscale-private.json` - Private sharing configuration (default)

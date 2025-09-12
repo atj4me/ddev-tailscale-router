@@ -6,7 +6,7 @@
 ## Example: "ddev tailscale launch"
 
 if [ "$1" = "launch" ] || [ $# -eq 0 ]; then
-    TAILSCALE_URL=$(ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1)
+    TAILSCALE_URL=$(ddev exec tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1)
     
     if [ -z "$TAILSCALE_URL" ]; then
         echo "Error: Could not retrieve Tailscale URL."
@@ -15,11 +15,11 @@ if [ "$1" = "launch" ] || [ $# -eq 0 ]; then
     
     ddev launch "$TAILSCALE_URL"
 elif [ "$1" = "stat" ]; then
-    ddev exec -s tailscale-router tailscale status --self --peers=false --active=true
+    ddev exec tailscale status --self --peers=false --active=true
 elif [ "$1" = "proxy" ]; then
-    ddev exec -s tailscale-router tailscale funnel status
+    ddev exec tailscale funnel status
 elif [ "$1" = "url" ]; then
-    ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1
+    ddev exec tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1
 else
-    ddev exec -s tailscale-router tailscale "$@"
+    ddev exec tailscale "$@"
 fi
