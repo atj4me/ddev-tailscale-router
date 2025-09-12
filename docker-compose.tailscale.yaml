@@ -1,0 +1,7 @@
+#ddev-generated
+services:
+  web:
+      volumes:
+        - tailscale-router-state:/var/lib/tailscale
+volumes:
+  tailscale-router-state:
