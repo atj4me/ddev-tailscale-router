@@ -11,8 +11,8 @@ web_extra_daemons:
     directory: /var/www/html
 
 web_extra_exposed_ports:
-  - 80
-  - 443
+  - "80"
+  - "443"
 
 web_extra_volumes:
   - type: volume
