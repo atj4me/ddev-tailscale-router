@@ -3,7 +3,7 @@ name: tailscale-router
 project_files:
   - tailscale-router/config/tailscale-private.json
   - tailscale-router/config/tailscale-public.json
-  - config.tailscale.yaml
+  - config.tailscale-router.yaml
   - commands/host/tailscale
   - web-build/Dockerfile.tailscale-router
   - docker-compose.tailscale-router.yaml
