@@ -1,8 +1,18 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
 
+# Set Tailscale environment variables
+ENV TS_AUTHKEY="${TS_AUTHKEY}"
+ENV TS_HOSTNAME="${DDEV_SITENAME}"
+ENV TS_EXTRA_ARGS="--accept-routes --ssh"
+ENV TS_STATE_DIR="/var/lib/tailscale"
+ENV TS_USERSPACE="false"
+ENV TS_PRIVACY="${TS_PRIVACY:-private}"
+ENV TS_SERVE_CONFIG="/config/tailscale-${TS_PRIVACY}.json"
+
 # Install Tailscale using the official install script
 RUN apt-get update && \
     apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/* && \
     curl -fsSL https://tailscale.com/install.sh | sh
+
