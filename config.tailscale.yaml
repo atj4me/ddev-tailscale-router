@@ -1,3 +1,5 @@
+#ddev-generated
+
 web_extra_daemons:
   - name: "tailscale-router"
     command: tailscale up
