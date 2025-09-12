@@ -14,11 +14,3 @@ web_extra_exposed_ports:
   - "80"
   - "443"
 
-web_extra_volumes:
-  - type: volume
-    source: tailscale-router-state
-    target: /var/lib/tailscale
-  - type: bind
-    source: ./tailscale-router/config
-    target: /config
-    read_only: true
