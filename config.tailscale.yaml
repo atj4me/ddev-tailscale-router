@@ -9,8 +9,3 @@ web_extra_daemons:
       sleep 2;
       tailscale up --authkey=${TS_AUTHKEY:-} --hostname=${DDEV_SITENAME} --accept-routes --ssh --state=/var/lib/tailscale/tailscaled.state --userspace --serve-config=/config/tailscale-${TS_PRIVACY:-private}.json"
     directory: /var/www/html
-
-web_extra_exposed_ports:
-  - "80"
-  - "443"
-
