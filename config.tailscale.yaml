@@ -1,6 +1,4 @@
 #ddev-generated
-webimage_extra_packages:
-  - tailscale
 
 web_extra_daemons:
   - name: "tailscale-router"
