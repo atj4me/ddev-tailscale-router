@@ -1,0 +1,24 @@
+#ddev-generated
+webimage_extra_packages:
+  - tailscale
+
+web_extra_daemons:
+  - name: "tailscale-router"
+    command: >
+      sh -c "tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock &
+      sleep 2;
+      tailscale up --authkey=${TS_AUTHKEY:-} --hostname=${DDEV_SITENAME} --accept-routes --ssh --state=/var/lib/tailscale/tailscaled.state --userspace --serve-config=/config/tailscale-${TS_PRIVACY:-private}.json"
+    directory: /var/www/html
+
+web_extra_exposed_ports:
+  - 80
+  - 443
+
+web_extra_volumes:
+  - type: volume
+    source: tailscale-router-state
+    target: /var/lib/tailscale
+  - type: bind
+    source: ./tailscale-router/config
+    target: /config
+    read_only: true
