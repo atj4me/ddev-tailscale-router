@@ -1,7 +1,15 @@
 #ddev-generated
 services:
   web:
-      volumes:
+    environment:
+        - TS_AUTHKEY=${TS_AUTHKEY}
+        - TS_HOSTNAME=${DDEV_SITENAME}
+        - TS_EXTRA_ARGS=--accept-routes --ssh
+        - TS_STATE_DIR=/var/lib/tailscale
+        - TS_USERSPACE=false
+        - TS_PRIVACY=${TS_PRIVACY:-private}
+        - TS_SERVE_CONFIG=/config/tailscale-${TS_PRIVACY}.json
+    volumes:
         - tailscale-router-state:/var/lib/tailscale
 volumes:
   tailscale-router-state:
