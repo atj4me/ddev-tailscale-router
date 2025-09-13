@@ -72,7 +72,7 @@ elif [ "${ARGS[0]}" = "share" ]; then
     echo "Tailscale $LABEL URL: $TAILSCALE_URL"
     ddev launch "$TAILSCALE_URL"
 elif [ "${ARGS[0]}" = "stop" ] ; then
-    stop_tailscale_share "${ARGS[0]}"
+    stop_tailscale_share "$CMD"
 elif [ "${ARGS[0]}" = "stat" ]; then
     tailscale_web status --self --peers=false --active=true
 elif [ "${ARGS[0]}" = "proxy" ]; then
