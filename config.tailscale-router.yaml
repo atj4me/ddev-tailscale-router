@@ -5,5 +5,5 @@ web_extra_daemons:
     command: tailscaled --statedir=${TS_STATE_DIR} --tun=userspace-networking
     directory: /usr/sbin
   - name: "tailscale-router"
-    command: tailscale up --auth-key=$TS_AUTHKEY --hostname=$TS_HOSTNAME $TS_EXTRA_ARGS 
+    command: tailscale up --auth-key=$TS_AUTHKEY --hostname=$TS_HOSTNAME $TS_EXTRA_ARGS
     directory: /var/www/html
