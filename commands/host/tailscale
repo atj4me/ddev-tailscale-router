@@ -54,7 +54,8 @@ if [ ${#ARGS[@]} -eq 0 ] || [ "${ARGS[0]}" = "launch" ]; then
     TAILSCALE_URL=$(get_tailscale_url $CMD)
     if [ -z "$TAILSCALE_URL" ]; then
         echo "No share found, creating one..."
-        run_tailscale_share "$CMD" "--bg"
+        BG_FLAG="--bg"
+        run_tailscale_share "$CMD" "$BG_FLAG"
         sleep 2
         TAILSCALE_URL=$(get_tailscale_url $CMD)
     fi
