@@ -102,6 +102,7 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 | ------- | ----------- |
 | `ddev tailscale <anything>` | Run any Tailscale CLI command |
 | `ddev tailscale launch` | Launch your project's Tailscale URL in browser |
+| `ddev tailscale share [--bg] [--public]` | Start sharing your project (use `--public` for Funnel, `--bg` to run in background) |
 | `ddev tailscale status` | Show Tailscale status |
 | `ddev tailscale ping <device>` | Ping a Tailscale device |
 | `ddev tailscale stat` | Show status with self and active peers only |
@@ -109,22 +110,31 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 | `ddev tailscale url` | Get your project's Tailscale URL |
 | `ddev logs -s tailscale-router` | Show logs for the Tailscale router service |
 
-## Advanced Customization
+You can run any [Tailscale CLI](https://tailscale.com/kb/1080/cli) command directly, and use the special `--public` flag to share via Funnel:
 
-To change the used Docker image:
+| Command | Description |
+| ------- | ----------- |
+| `ddev tailscale <any tailscale command> [flags]` | Run any Tailscale CLI command (all arguments except `--public` are passed through) |
+
+**Note:**
+- The `--public` flag is handled by the wrapper and will switch to Tailscale Funnel mode (public sharing). It is not passed to the Tailscale CLI.
+- All other arguments and flags are forwarded to the Tailscale CLI as-is.
+
+**Examples:**
 
 ```bash
-ddev dotenv set .ddev/.env.tailscale-router --ts-docker-image=tailscale/tailscale:latest
-ddev restart
+# Launch private share (default)
+ddev tailscale launch
+# Launch public share (Funnel)
+ddev tailscale launch --public
+# Start sharing in background (private)
+ddev tailscale share --bg
+# Start sharing in background (public)
+ddev tailscale share --bg --public
+# Run any Tailscale CLI command
+ddev tailscale status
+ddev tailscale ping <device>
 ```
-
-All customization options (use with caution):
-
-| Variable | Flag | Default |
-| -------- | ---- | ------- |
-| `TS_DOCKER_IMAGE` | `--ts-docker-image` | `tailscale/tailscale:latest` |
-| `TS_AUTHKEY` | `--ts-authkey` | (none, required, not recommended to set in `.ddev/.env.tailscale-router`) |
-| `TS_PRIVACY` | `--ts-privacy` | `private` (`private`/`public`) |
 
 ## Components of the Repository
 

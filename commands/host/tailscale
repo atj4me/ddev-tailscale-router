@@ -1,25 +1,93 @@
 #!/usr/bin/env bash
 
 ## #ddev-generated: If you want to edit and own this file, remove this line.
-## Description: Tailscale command with launch functionality
-## Usage: tailscale [launch|stat|proxy|url|args...]
-## Example: "ddev tailscale launch"
+## Description: Tailscale command with launch/share functionality
+## Usage: tailscale [launch|share|stat|proxy|url|args...]
+## Example: "ddev tailscale launch" or "ddev tailscale share"
 
-if [ "$1" = "launch" ] || [ $# -eq 0 ]; then
-    TAILSCALE_URL=$(ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1)
-    
+
+# Helper to run tailscale in the web container
+tailscale_web() {
+    ddev exec -s web tailscale "$@"
+}
+
+# Helper to extract the Tailscale URL from status
+get_tailscale_url() {
+    local cmd="$1"
+    if [ "$cmd" != "funnel" ] && [ "$cmd" != "serve" ]; then
+        cmd="serve"
+    fi
+    tailscale_web "$cmd" status | grep -o 'https://[^[:space:]]*' | head -1
+}
+
+# Helper to run tailscale share/funnel/serve with options
+run_tailscale_share() {
+    local cmd="$1"
+    local bg_flag="$2"
+    if [ -n "$bg_flag" ]; then
+        tailscale_web "$cmd" "$bg_flag" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
+    else
+        tailscale_web "$cmd" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
+    fi
+}
+
+stop_tailscale_share() {
+    local cmd="$1"
+    tailscale_web "$cmd" --https=443 off
+}
+
+# Parse args, handle --public, and forward all other args
+CMD="serve"
+LABEL="private"
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "--public" ]; then
+        CMD="funnel"
+        LABEL="public"
+    else
+        ARGS+=("$arg")
+    fi
+done
+
+# If no args, default to launching a share
+if [ ${#ARGS[@]} -eq 0 ] || [ "${ARGS[0]}" = "launch" ]; then
+    TAILSCALE_URL=$(get_tailscale_url $CMD)
     if [ -z "$TAILSCALE_URL" ]; then
-        echo "Error: Could not retrieve Tailscale URL."
+        echo "No share found, creating one..."
+        BG_FLAG="--bg"
+        run_tailscale_share "$CMD" "$BG_FLAG"
+        sleep 2
+        TAILSCALE_URL=$(get_tailscale_url $CMD)
+    fi
+    if [ -z "$TAILSCALE_URL" ]; then
+        echo "Error: Could not retrieve Tailscale URL after $CMD."
         exit 1
     fi
-    
+    echo "Tailscale $LABEL URL: $TAILSCALE_URL"
     ddev launch "$TAILSCALE_URL"
-elif [ "$1" = "stat" ]; then
-    ddev exec -s tailscale-router tailscale status --self --peers=false --active=true
-elif [ "$1" = "proxy" ]; then
-    ddev exec -s tailscale-router tailscale funnel status
-elif [ "$1" = "url" ]; then
-    ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1
+elif [ "${ARGS[0]}" = "share" ]; then
+    BG_FLAG=""
+    for arg in "${ARGS[@]}"; do
+        if [ "$arg" = "--bg" ]; then
+            BG_FLAG="--bg"
+        fi
+    done
+    run_tailscale_share "$CMD" "$BG_FLAG"
+    TAILSCALE_URL=$(get_tailscale_url $CMD)
+    if [ -z "$TAILSCALE_URL" ]; then
+        echo "Error: Could not retrieve Tailscale URL after $CMD."
+        exit 1
+    fi
+    echo "Tailscale $LABEL URL: $TAILSCALE_URL"
+    ddev launch "$TAILSCALE_URL"
+elif [ "${ARGS[0]}" = "stop" ] ; then
+    stop_tailscale_share "$CMD"
+elif [ "${ARGS[0]}" = "stat" ]; then
+    tailscale_web status --self --peers=false --active=true
+elif [ "${ARGS[0]}" = "proxy" ]; then
+    tailscale_web $CMD status
+elif [ "${ARGS[0]}" = "url" ]; then
+    get_tailscale_url $CMD
 else
-    ddev exec -s tailscale-router tailscale "$@"
+    tailscale_web "${ARGS[@]}"
 fi
