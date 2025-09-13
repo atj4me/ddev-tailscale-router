@@ -10,4 +10,4 @@ RUN apt-get update && \
     curl -fsSL https://tailscale.com/install.sh | sh
 
 ARG username
-RUN mkdir -p /var/lib/tailscale && chown -R atj:atj /var/lib/tailscale
+RUN mkdir -p /var/lib/tailscale && chown -R ${username}:${username} /var/lib/tailscale
