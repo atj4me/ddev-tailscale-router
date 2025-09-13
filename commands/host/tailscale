@@ -13,7 +13,11 @@ tailscale_web() {
 
 # Helper to extract the Tailscale URL from status
 get_tailscale_url() {
-    tailscale_web "$1" status | grep -o 'https://[^[:space:]]*' | head -1
+    local cmd="$1"
+    if [ "$cmd" != "funnel" ] && [ "$cmd" != "serve" ]; then
+        cmd="serve"
+    fi
+    tailscale_web "$cmd" status | grep -o 'https://[^[:space:]]*' | head -1
 }
 
 # Helper to run tailscale share/funnel/serve with options
