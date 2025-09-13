@@ -29,7 +29,7 @@ run_tailscale_share() {
 
 stop_tailscale_share() {
     local cmd="$1"
-    tailscale_web $cmd --https=443 off
+    tailscale_web "$cmd" --https=443 off
 }
 
 # Parse args, handle --public, and forward all other args
