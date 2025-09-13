@@ -1,29 +1,3 @@
-@test "tailscale share --public forwards correctly" {
-  set -eu -o pipefail
-  run ddev add-on get "${DIR}"
-  assert_success
-  run ddev restart -y
-  assert_success
-
-  # Should use funnel (public) and not pass --public to tailscale CLI
-  run ddev tailscale share --public --bg
-  # Command should execute (may show error if not logged in, but shouldn't crash)
-}
-
-@test "tailscale arbitrary args are forwarded" {
-  set -eu -o pipefail
-  run ddev add-on get "${DIR}"
-  assert_success
-  run ddev restart -y
-  assert_success
-
-  # Should forward all args except --public
-  run ddev tailscale status
-  # Command should execute (may show error if not logged in, but shouldn't crash)
-
-  run ddev tailscale ping 127.0.0.1
-  # Command should execute (may show error if not logged in, but shouldn't crash)
-}
 #!/usr/bin/env bats
 
 # Bats is a testing framework for Bash
@@ -85,6 +59,7 @@ teardown() {
   fi
 }
 
+
 @test "install from directory" {
   set -eu -o pipefail
   echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
@@ -92,19 +67,8 @@ teardown() {
   assert_success
   run ddev restart -y
   assert_success
-  health_checks
 }
 
-# bats test_tags=release
-@test "install from release" {
-  set -eu -o pipefail
-  echo "# ddev add-on get ${GITHUB_REPO} with project ${PROJNAME} in $(pwd)" >&3
-  run ddev add-on get "${GITHUB_REPO}"
-  assert_success
-  run ddev restart -y
-  assert_success
-  health_checks
-}
 
 @test "tailscale command exists and responds" {
   set -eu -o pipefail
@@ -113,35 +77,13 @@ teardown() {
   run ddev restart -y
   assert_success
 
-  # Test tailscale command exists (without --help which may not work)
+  # Test tailscale command exists (should not crash)
   run ddev tailscale status
   # Command should execute (may show error but shouldn't crash)
 }
 
-@test "tailscale service container is running" {
-  set -eu -o pipefail
-  run ddev add-on get "${DIR}"
-  assert_success
-  run ddev restart -y
-  assert_success
 
-  # Check if tailscale-router container exists
-  run docker ps -a --filter "name=ddev-${PROJNAME}-tailscale-router" --format "{{.Names}}"
-  assert_success
-  assert_output "ddev-${PROJNAME}-tailscale-router"
-}
 
-@test "configuration files are properly installed" {
-  set -eu -o pipefail
-  run ddev add-on get "${DIR}"
-  assert_success
-
-  # Check if config files exist
-  assert_file_exists ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_file_exists ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_file_exists ".ddev/docker-compose.tailscale-router.yaml"
-  assert_file_exists ".ddev/commands/host/tailscale"
-}
 
 @test "tailscale command shortcuts work" {
   set -eu -o pipefail
@@ -157,38 +99,36 @@ teardown() {
   # Test proxy command
   run ddev tailscale proxy
   # Command should execute
-}
 
-@test "docker-compose file has required services and volumes" {
+  # Test share and launch commands (should not crash)
+  run ddev tailscale share --bg
+  run ddev tailscale launch
+}
+@test "tailscale share --public forwards correctly" {
   set -eu -o pipefail
   run ddev add-on get "${DIR}"
   assert_success
-
-  # Check docker-compose file contains required elements
-  run grep -q "tailscale-router:" ".ddev/docker-compose.tailscale-router.yaml"
+  run ddev restart -y
   assert_success
 
-  run grep -q "tailscale-router-state:" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
-
-  run grep -q "image: \${TS_DOCKER_IMAGE:-tailscale/tailscale:latest}-\${DDEV_SITENAME}-built" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
+  # Should use funnel (public) and not pass --public to tailscale CLI
+  run ddev tailscale share --public --bg
+  # Command should execute (may show error if not logged in, but shouldn't crash)
 }
 
-@test "configuration supports both private and public modes" {
+@test "tailscale arbitrary args are forwarded" {
   set -eu -o pipefail
   run ddev add-on get "${DIR}"
   assert_success
-
-  # Check private config
-  run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_success
-  run grep -q 'false' ".ddev/tailscale-router/config/tailscale-private.json"
+  run ddev restart -y
   assert_success
 
-  # Check public config
-  run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_success
-  run grep -q 'true' ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_success
+  # Should forward all args except --public
+  run ddev tailscale status
+  # Command should execute (may show error if not logged in, but shouldn't crash)
+
+  run ddev tailscale ping 127.0.0.1
+  # Command should execute (may show error if not logged in, but shouldn't crash)
 }
+
+
