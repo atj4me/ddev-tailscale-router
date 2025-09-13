@@ -25,9 +25,9 @@ run_tailscale_share() {
     local cmd="$1"
     local bg_flag="$2"
     if [ -n "$bg_flag" ]; then
-        tailscale_web "$cmd" "$bg_flag" 127.0.0.1:$DDEV_ROUTER_HTTP_PORT
+        tailscale_web "$cmd" "$bg_flag" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
     else
-        tailscale_web "$cmd" 127.0.0.1:$DDEV_ROUTER_HTTP_PORT
+        tailscale_web "$cmd" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
     fi
 }
 
