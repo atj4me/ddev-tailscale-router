@@ -1,3 +1,5 @@
+#ddev-generated
+
 certificatesResolvers:
   tailscale-router:
     tailscale: {}

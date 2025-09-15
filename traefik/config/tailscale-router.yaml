@@ -1,3 +1,5 @@
+#ddev-generated
+
 tls:
   certificates:
     - certResolver: tailscale-router
