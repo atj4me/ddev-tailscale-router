@@ -24,12 +24,16 @@ get_tailscale_url() {
 run_tailscale_share() {
     local cmd="$1"
     local bg_flag="$2"
-    tailscale_web "$cmd" "$bg_flag" 127.0.0.1:$DDEV_ROUTER_HTTP_PORT
+    if [ -n "$bg_flag" ]; then
+        tailscale_web "$cmd" "$bg_flag" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
+    else
+        tailscale_web "$cmd" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
+    fi
 }
 
 stop_tailscale_share() {
     local cmd="$1"
-    tailscale_web $cmd --https=443 off
+    tailscale_web "$cmd" --https=443 off
 }
 
 # Parse args, handle --public, and forward all other args
@@ -50,7 +54,8 @@ if [ ${#ARGS[@]} -eq 0 ] || [ "${ARGS[0]}" = "launch" ]; then
     TAILSCALE_URL=$(get_tailscale_url $CMD)
     if [ -z "$TAILSCALE_URL" ]; then
         echo "No share found, creating one..."
-        run_tailscale_share "$CMD" "--bg"
+        BG_FLAG="--bg"
+        run_tailscale_share "$CMD" "$BG_FLAG"
         sleep 2
         TAILSCALE_URL=$(get_tailscale_url $CMD)
     fi
