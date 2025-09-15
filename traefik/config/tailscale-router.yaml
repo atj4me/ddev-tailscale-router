@@ -1,0 +1,3 @@
+tls:
+  certificates:
+    - certResolver: tailscale-router

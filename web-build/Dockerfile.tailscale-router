@@ -1,13 +1,5 @@
 #ddev-generated
-# This Dockerfile installs Tailscale in a web container.
-ARG BASE_IMAGE
-FROM $BASE_IMAGE
-
-# Install Tailscale using the official install script
-RUN apt-get update && \
-    apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/* && \
-    curl -fsSL https://tailscale.com/install.sh | sh
+RUN curl -fsSL https://tailscale.com/install.sh | sh
 
 ARG username
 RUN mkdir -p /var/lib/tailscale && chown -R ${username}:${username} /var/lib/tailscale

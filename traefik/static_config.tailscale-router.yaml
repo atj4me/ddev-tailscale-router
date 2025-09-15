@@ -1,0 +1,3 @@
+certificatesResolvers:
+  tailscale-router:
+    tailscale: {}
