@@ -7,7 +7,7 @@ project_files:
   - docker-compose.tailscale-router.yaml
   - traefik/config/tailscale-router.yaml
 
-global_config:
+global_files:
   - traefik/static_config.tailscale-router.yaml
 
 ddev_version_constraint: '>= v1.24.3'
