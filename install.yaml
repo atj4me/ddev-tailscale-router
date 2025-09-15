@@ -4,7 +4,7 @@ project_files:
   - config.tailscale-router.yaml
   - commands/host/tailscale
   - web-build/Dockerfile.tailscale-router
-  - docker-compose.tailscale-router.config.tailscale-router.yaml
+  - docker-compose.tailscale-router.yaml
 
 global_config:
   - traefik/static_config.tailscale-router.yaml
