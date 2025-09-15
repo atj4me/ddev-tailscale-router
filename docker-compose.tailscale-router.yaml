@@ -7,5 +7,6 @@ services:
         - TS_STATE_DIR=/var/lib/tailscale
     volumes:
         - tailscale-router-state:/var/lib/tailscale
+        - ./custom_certs:/var/lib/tailscale/certs
 volumes:
   tailscale-router-state:

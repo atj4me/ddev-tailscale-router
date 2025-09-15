@@ -5,10 +5,7 @@ project_files:
   - commands/host/tailscale
   - web-build/Dockerfile.tailscale-router
   - docker-compose.tailscale-router.yaml
-  - traefik/config/tailscale-router.yaml
-
-global_files:
-  - traefik/static_config.tailscale-router.yaml
+  - custom_certs
 
 ddev_version_constraint: '>= v1.24.3'
 
