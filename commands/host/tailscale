@@ -11,83 +11,64 @@ tailscale_web() {
     ddev exec -s web tailscale "$@"
 }
 
-# Helper to extract the Tailscale URL from status
 get_tailscale_url() {
-    local cmd="$1"
-    if [ "$cmd" != "funnel" ] && [ "$cmd" != "serve" ]; then
-        cmd="serve"
-    fi
-    tailscale_web "$cmd" status | grep -o 'https://[^[:space:]]*' | head -1
+    URL=$(ddev exec -s web bash -c 'tailscale status --peers=false --json | jq -r ".Self.DNSName" | sed "s/\.$//"')
+    echo "https://$URL"
 }
 
-# Helper to run tailscale share/funnel/serve with options
+tailscale_login() {
+    ddev exec -s web bash -c 'tailscale up --auth-key=$TS_AUTHKEY --hostname=$DDEV_SITENAME $TS_EXTRA_ARGS'
+}
+
 run_tailscale_share() {
     local cmd="$1"
-    local bg_flag="$2"
-    if [ -n "$bg_flag" ]; then
-        tailscale_web "$cmd" "$bg_flag" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
-    else
-        tailscale_web "$cmd" 127.0.0.1:"$DDEV_ROUTER_HTTP_PORT"
+    # Capture output
+    output=$(tailscale_web "$cmd" --bg 127.0.0.1:$DDEV_ROUTER_HTTP_PORT)
+    share_status=$?
+    if [ $share_status -ne 0 ]; then
+        tailscale_login
+        run_tailscale_share "$cmd"
+        exit 0
     fi
+    # Replace the disable proxy instruction
+    echo "$output" | sed "s/To disable the proxy, run: tailscale $cmd --https=443 off/To disable the proxy, run: ddev tailscale stop instead/"
 }
 
 stop_tailscale_share() {
     local cmd="$1"
-    tailscale_web "$cmd" --https=443 off
+    tailscale_web "$cmd" --https 443 off
 }
 
-# Parse args, handle --public, and forward all other args
-CMD="serve"
-LABEL="private"
-ARGS=()
-for arg in "$@"; do
-    if [ "$arg" = "--public" ]; then
-        CMD="funnel"
-        LABEL="public"
-    else
-        ARGS+=("$arg")
-    fi
-done
 
-# If no args, default to launching a share
-if [ ${#ARGS[@]} -eq 0 ] || [ "${ARGS[0]}" = "launch" ]; then
-    TAILSCALE_URL=$(get_tailscale_url $CMD)
+CMD="serve"
+if [ "$2" = "--public" ]; then
+    echo -e "⚠️  Sharing your local development environment publicly can expose sensitive data. Ensure you understand the implications before proceeding."
+    CMD="funnel"
+fi
+
+if [ "$1" = "login" ]; then
+    tailscale_login
+    exit 0
+elif [ "$1" = "launch" ] || [ "$1" = "share" ] || [ $# -eq 0 ]; then
+
+    run_tailscale_share "$CMD"
+    sleep 1 # Give it a moment to start
+    TAILSCALE_URL=$(get_tailscale_url)
+
     if [ -z "$TAILSCALE_URL" ]; then
-        echo "No share found, creating one..."
-        BG_FLAG="--bg"
-        run_tailscale_share "$CMD" "$BG_FLAG"
-        sleep 2
-        TAILSCALE_URL=$(get_tailscale_url $CMD)
-    fi
-    if [ -z "$TAILSCALE_URL" ]; then
-        echo "Error: Could not retrieve Tailscale URL after $CMD."
+        echo "Error: Could not retrieve Tailscale URL."
         exit 1
     fi
-    echo "Tailscale $LABEL URL: $TAILSCALE_URL"
+
     ddev launch "$TAILSCALE_URL"
-elif [ "${ARGS[0]}" = "share" ]; then
-    BG_FLAG=""
-    for arg in "${ARGS[@]}"; do
-        if [ "$arg" = "--bg" ]; then
-            BG_FLAG="--bg"
-        fi
-    done
-    run_tailscale_share "$CMD" "$BG_FLAG"
-    TAILSCALE_URL=$(get_tailscale_url $CMD)
-    if [ -z "$TAILSCALE_URL" ]; then
-        echo "Error: Could not retrieve Tailscale URL after $CMD."
-        exit 1
-    fi
-    echo "Tailscale $LABEL URL: $TAILSCALE_URL"
-    ddev launch "$TAILSCALE_URL"
-elif [ "${ARGS[0]}" = "stop" ] ; then
+elif [  "$1" = "stop" ]; then
     stop_tailscale_share "$CMD"
-elif [ "${ARGS[0]}" = "stat" ]; then
+elif [ "$1" = "stat" ]; then
     tailscale_web status --self --peers=false --active=true
-elif [ "${ARGS[0]}" = "proxy" ]; then
-    tailscale_web $CMD status
-elif [ "${ARGS[0]}" = "url" ]; then
-    get_tailscale_url $CMD
+elif [ "$1" = "proxystat" ]; then
+    tailscale_web funnel status
+elif [ "$1" = "url" ]; then
+    get_tailscale_url
 else
-    tailscale_web "${ARGS[@]}"
+    tailscale_web "$@"
 fi

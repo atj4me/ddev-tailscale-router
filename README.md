@@ -52,6 +52,8 @@ Before installing the add-on:
     ```bash
     ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-your-key-here
     ```
+    
+    > **Note:** You can also set up authentication using `ddev tailscale login` after your project starts. This provides secure, interactive access for your DDEV project.
 
 4. **For public access**: Configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) to enable Funnel. Add the `funnel` node attribute to your ACL policy in the [Tailscale admin console](https://login.tailscale.com/admin/acls):
 
@@ -71,10 +73,15 @@ Before installing the add-on:
 ```bash
 ddev add-on get atj4me/ddev-tailscale-router
 ddev restart
+```
 
-# Launch your project's Tailscale URL in browser
+Launch your project's Tailscale URL in browser
+```
 ddev tailscale launch
-# Or get your project's Tailscale URL
+```
+
+Or get your project's Tailscale URL
+```
 ddev tailscale url
 ```
 
@@ -82,71 +89,52 @@ Your project's permanent Tailscale URL will look like: `https://<project-name>.<
 
 ### Configure Privacy (Optional)
 
-By default, your project is only accessible to devices on your Tailscale network (private mode). You can make it publicly accessible:
+By default, your project is only accessible to devices on your Tailscale network (private mode). This happens automatically when the project starts. You can stop sharing automatically using 
+```bash
+ddev tailscale stop
+```
+
+To make your project publicly accessible (Funnel mode):
 
 ```bash
-# Switch to public mode (accessible to anyone on the internet)
-ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=public
-ddev restart
+ddev tailscale share --public
+```
 
-# Switch back to private mode (default)
-ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=private
-ddev restart
+To revert to private mode (only accessible to your Tailscale devices):
+
+```bash
+ddev tailscale share
 ```
 
 ## Usage
+
 
 Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus helpful shortcuts:
 
 | Command | Description |
 | ------- | ----------- |
-| `ddev tailscale <anything>` | Run any Tailscale CLI command |
-| `ddev tailscale launch` | Launch your project's Tailscale URL in browser |
-| `ddev tailscale share [--bg] [--public]` | Start sharing your project (use `--public` for Funnel, `--bg` to run in background) |
-| `ddev tailscale status` | Show Tailscale status |
-| `ddev tailscale ping <device>` | Ping a Tailscale device |
-| `ddev tailscale stat` | Show status with self and active peers only |
-| `ddev tailscale proxy` | Show funnel status |
-| `ddev tailscale url` | Get your project's Tailscale URL |
-| `ddev logs -s tailscale-router` | Show logs for the Tailscale router service |
+| `ddev tailscale launch [--public]` | Launch your project's Tailscale URL in browser (`--public` uses Funnel mode for public access) |
+| `ddev tailscale share [--public]` | Start sharing your project (`--public` uses Funnel mode for public access) |
+| `ddev tailscale stop` | Stop sharing |
+| `ddev tailscale stat` | Show Tailscale status for self and active peers |
+| `ddev tailscale proxystat` | Show Funnel/Serve (proxy) status |
+| `ddev tailscale url` | Get your project's Tailscale Funnel URL |
+| `ddev tailscale login` | Authenticate with Tailscale interactively |
+| `ddev tailscale <any tailscale command>` | Run any Tailscale CLI command in the web container |
 
-You can run any [Tailscale CLI](https://tailscale.com/kb/1080/cli) command directly, and use the special `--public` flag to share via Funnel:
-
-| Command | Description |
-| ------- | ----------- |
-| `ddev tailscale <any tailscale command> [flags]` | Run any Tailscale CLI command (all arguments except `--public` are passed through) |
-
-**Note:**
-- The `--public` flag is handled by the wrapper and will switch to Tailscale Funnel mode (public sharing). It is not passed to the Tailscale CLI.
-- All other arguments and flags are forwarded to the Tailscale CLI as-is.
-
-**Examples:**
-
-```bash
-# Launch private share (default)
-ddev tailscale launch
-# Launch public share (Funnel)
-ddev tailscale launch --public
-# Start sharing in background (private)
-ddev tailscale share --bg
-# Start sharing in background (public)
-ddev tailscale share --bg --public
-# Run any Tailscale CLI command
-ddev tailscale status
-ddev tailscale ping <device>
-```
 
 ## Components of the Repository
 
-- **`install.yaml`** - DDEV add-on installation manifest that copies necessary files and shows setup instructions
-- **`docker-compose.tailscale-router.yaml`** - Core Docker Compose configuration defining the `tailscale-router` service with Tailscale authentication and `socat` traffic forwarding
-- **`commands/host/tailscale`** - Custom DDEV host command providing access to Tailscale CLI with helpful shortcuts
-- **`tailscale-router/config/`** - JSON configuration files for Tailscale's serve command:
-  - `tailscale-private.json` - Private sharing configuration (default)
-  - `tailscale-public.json` - Public sharing configuration
-- **`tests/test.bats`** - Automated test script for verifying Tailscale integration
-- **`.github/workflows/tests.yml`** - GitHub Actions for automated testing on push and schedule
-- **`.github/ISSUE_TEMPLATE/` and `PULL_REQUEST_TEMPLATE.md`** - Templates for streamlined contributions
+
+- **`install.yaml`** – DDEV add-on installation manifest, copies files and provides setup instructions
+- **`docker-compose.tailscale-router.yaml`** – Docker Compose config for the Tailscale router service, including authentication and proxy settings
+- **`config.tailscale-router.yaml`** – Main YAML configuration for Tailscale router settings 
+- **`commands/host/tailscale`** – Bash wrapper for DDEV host, provides Tailscale CLI access and shortcuts
+- **`web-build/Dockerfile.tailscale-router`** – Dockerfile for building the web container with Tailscale support
+- **`tests/test.bats`** – Automated BATS test script for verifying Tailscale integration
+- **`tests/testdata/`** – Test data for automated tests
+- **`.github/workflows/tests.yml`** – GitHub Actions workflow for automated testing
+- **`.github/ISSUE_TEMPLATE/` and `PULL_REQUEST_TEMPLATE.md`** – Contribution and PR templates
 
 ## Testing
 

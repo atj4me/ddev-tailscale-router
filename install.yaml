@@ -5,7 +5,6 @@ project_files:
   - commands/host/tailscale
   - web-build/Dockerfile.tailscale-router
   - docker-compose.tailscale-router.yaml
-  - custom_certs/README.txt
 
 ddev_version_constraint: '>= v1.24.3'
 
