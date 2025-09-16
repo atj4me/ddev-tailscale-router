@@ -7,9 +7,6 @@ web_extra_daemons:
   - name: "tailscale-router"
     command: tailscale up --auth-key=$TS_AUTHKEY --hostname=$DDEV_SITENAME $TS_EXTRA_ARGS
     directory: /var/www/html
-  - name: "tailscale-certificates"
-    command: bash -c 'tailscale cert --cert-file custom_certs/${DDEV_PROJECT}.crt --key-file custom_certs/${DDEV_PROJECT}.key $(tailscale status --peers=false --json | jq -r ".Self.DNSName" | sed "s/\.$//")'
-    directory: /var/www/html/.ddev
   - name: "tailscale-serve"
     command: bash -c 'tailscale serve $DDEV_ROUTER_HTTP_PORT'
     directory: /var/www/html/.ddev
