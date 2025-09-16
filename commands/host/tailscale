@@ -21,14 +21,31 @@ tailscale_login() {
 }
 
 run_tailscale_share() {
-    local cmd="$1"
+    local cmd="serve"
+    local port="$DDEV_ROUTER_HTTP_PORT"
+    # Parse flags from arguments
+    for arg in "$@"; do
+        case $arg in
+            --public)
+                echo -e "⚠️  Sharing your local development environment publicly can expose sensitive data. Ensure you understand the implications before proceeding."
+                cmd="funnel"
+                ;;
+            --port=*)
+                port="${arg#--port=}"
+                ;;
+        esac
+    done
     # Capture output
-    output=$(tailscale_web "$cmd" --bg 127.0.0.1:$DDEV_ROUTER_HTTP_PORT)
+    output=$(tailscale_web "$cmd" --bg 127.0.0.1:$port)
     share_status=$?
-    if [ $share_status -ne 0 ]; then
+    if [[ "$output" == *"Logged out"* ]]; then
         tailscale_login
-        run_tailscale_share "$cmd"
-        exit 0
+        output=$(tailscale_web "$cmd" --bg 127.0.0.1:$port)
+        share_status=$?
+    fi
+    if [ $share_status -ne 0 ]; then
+        echo "Error: Tailscale share failed. Output:\n$output"
+        exit $share_status
     fi
     # Replace the disable proxy instruction
     echo "$output" | sed "s/To disable the proxy, run: tailscale $cmd --https=443 off/To disable the proxy, run: ddev tailscale stop instead/"
@@ -41,25 +58,19 @@ stop_tailscale_share() {
 
 
 CMD="serve"
-if [ "$2" = "--public" ]; then
-    echo -e "⚠️  Sharing your local development environment publicly can expose sensitive data. Ensure you understand the implications before proceeding."
-    CMD="funnel"
-fi
+PORT="$DDEV_ROUTER_HTTP_PORT"
 
 if [ "$1" = "login" ]; then
     tailscale_login
     exit 0
 elif [ "$1" = "launch" ] || [ "$1" = "share" ] || [ $# -eq 0 ]; then
-
-    run_tailscale_share "$CMD"
+    run_tailscale_share "$@"
     sleep 1 # Give it a moment to start
     TAILSCALE_URL=$(get_tailscale_url)
-
     if [ -z "$TAILSCALE_URL" ]; then
         echo "Error: Could not retrieve Tailscale URL."
         exit 1
     fi
-
     ddev launch "$TAILSCALE_URL"
 elif [  "$1" = "stop" ]; then
     stop_tailscale_share "$CMD"
