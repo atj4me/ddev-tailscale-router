@@ -11,5 +11,5 @@ web_extra_daemons:
     command: bash -c 'tailscale cert --cert-file custom_certs/${DDEV_PROJECT}.crt --key-file custom_certs/${DDEV_PROJECT}.key $(tailscale status --peers=false --json | jq -r ".Self.DNSName" | sed "s/\.$//")'
     directory: /var/www/html/.ddev
   - name: "tailscale-serve"
-    command: bash -c 'tailscale serve $(tailscale status --peers=false --json | jq -r ".Self.DNSName" | sed "s/\.$//")'
+    command: bash -c 'tailscale serve $(tailscale status --peers=false --json | jq -r ".Self.DNSName" | sed "s/\.$//"):$DDEV_HOST_PORT_HTTP'
     directory: /var/www/html/.ddev
