@@ -47,15 +47,10 @@ Before installing the add-on:
     echo 'export TS_AUTHKEY=tskey-auth-your-key-here' >> ~/.bashrc
     ```
 
-    Alternatively, you can set it per project (**NOT RECOMMENDED**, because `.ddev/.env.tailscale-router` is not intended to store secrets) using:
+  Alternatively, you can also set up authentication using `ddev tailscale login` after your project starts. This provides secure, interactive access for your DDEV project.
 
-    ```bash
-    ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-your-key-here
-    ```
-    
-    > **Note:** You can also set up authentication using `ddev tailscale login` after your project starts. This provides secure, interactive access for your DDEV project.
 
-4. **For public access**: Configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) to enable Funnel. Add the `funnel` node attribute to your ACL policy in the [Tailscale admin console](https://login.tailscale.com/admin/acls):
+4. **For public access**: To enable Funnel (public sharing), configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) in the [Tailscale admin console](https://login.tailscale.com/admin/acls) by adding the `funnel` node attribute:
 
     ```json
     {
@@ -68,6 +63,17 @@ Before installing the add-on:
     }
     ```
 
+5. **For SSL certificate generation** (Optional): To run the command `tailscale cert` from the container, the machine needs corresponsing access by adding a `certs` capability inside node attributes: 
+    
+    ```json
+    "nodeAttrs": [
+      {
+        "target": ["*"],
+        "attr":   ["tailscale.com/cap/certs"],
+      },
+    ],
+    ```
+
 ## Installation
 
 ```bash
@@ -75,24 +81,28 @@ ddev add-on get atj4me/ddev-tailscale-router
 ddev restart
 ```
 
-Launch your project's Tailscale URL in browser
-```
+
+To launch your project's Tailscale URL in your browser:
+```bash
 ddev tailscale launch
 ```
 
-Or get your project's Tailscale URL
-```
+To get your project's Tailscale URL:
+```bash
 ddev tailscale url
 ```
 
-Your project's permanent Tailscale URL will look like: `https://<project-name>.<your-tailnet>.ts.net`. Also, it can be found in your [Tailscale admin console](https://login.tailscale.com/admin/machines).
+
+Your project's permanent Tailscale URL will look like: `https://<project-name>.<your-tailnet>.ts.net`. You can also find it in your [Tailscale admin console](https://login.tailscale.com/admin/machines).
 
 ### Configure Privacy (Optional)
 
-By default, your project is only accessible to devices on your Tailscale network (private mode). This happens automatically when the project starts. You can stop sharing automatically using 
+
+By default, your project is only accessible to devices on your Tailscale network (private mode). This happens automatically when the project starts. You can stop sharing using:
 ```bash
 ddev tailscale stop
 ```
+
 
 To make your project publicly accessible (Funnel mode):
 
@@ -108,7 +118,6 @@ ddev tailscale share
 
 ## Usage
 
-
 Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus helpful shortcuts:
 
 | Command | Description |
@@ -123,12 +132,34 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 | `ddev tailscale <any tailscale command>` | Run any Tailscale CLI command in the web container |
 
 
+> **Note:** The add-on assumes your project uses the port configured in `DDEV_ROUTER_HTTP_PORT` (usually port `80`). To use a custom port, add `--port=<port number>` to your command. For example, `ddev tailscale share --port=8025 --public` will expose the Mailpit service to the internet. Only ports inside the `web` service are supported.
+
+## Advanced Commands
+
+[Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) or [Tailscale Funnel](https://tailscale.com/kb/1311/tailscale-funnel) commands can be used to serve custom ports or files on your TailNet Server. You would need to run `ddev tailscale stop` first. 
+
+```bash
+# To serve a ReactJS application running on port 8443
+ddev tailscale stop
+ddev tailscale serve --bg --https=8443 localhost:5173
+```
+    
+
+Only ports `8443`, `443`, and `10000` are supported by `tailscale funnel`.
+
+
+## Troubleshooting
+
+
+If you get an error while running the share command, try logging out using `ddev tailscale logout` and then run your command again (`ddev tailscale share`, `ddev tailscale launch`, or your custom command).
+
+
 ## Components of the Repository
 
 
 - **`install.yaml`** – DDEV add-on installation manifest, copies files and provides setup instructions
 - **`docker-compose.tailscale-router.yaml`** – Docker Compose config for the Tailscale router service, including authentication and proxy settings
-- **`config.tailscale-router.yaml`** – Main YAML configuration for Tailscale router settings 
+- **`config.tailscale-router.yaml`** – Main YAML configuration for Tailscale router settings
 - **`commands/host/tailscale`** – Bash wrapper for DDEV host, provides Tailscale CLI access and shortcuts
 - **`web-build/Dockerfile.tailscale-router`** – Dockerfile for building the web container with Tailscale support
 - **`tests/test.bats`** – Automated BATS test script for verifying Tailscale integration
@@ -148,6 +179,7 @@ bats tests/test.bats
 
 Tests also run automatically in GitHub Actions on every push.
 
+
 ## Contributing
 
 Contributions are welcome! If you have suggestions, bug reports, or feature requests, please:
@@ -156,6 +188,7 @@ Contributions are welcome! If you have suggestions, bug reports, or feature requ
 2. Create a new branch.
 3. Make your changes.
 4. Submit a pull request.
+
 
 ## License
 
