@@ -3,7 +3,7 @@ services:
   web:
     environment:
         - TS_AUTHKEY=${TS_AUTHKEY:-}
-        - TS_EXTRA_ARGS=--accept-routes --ssh
+        - TS_EXTRA_ARGS=${TS_EXTRA_ARGS:--accept-routes --ssh} 
         - TS_STATE_DIR=/var/lib/tailscale
     volumes:
         - tailscale-router-state:/var/lib/tailscale
