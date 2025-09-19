@@ -181,7 +181,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "help" ] || [ $# -eq 0 ]; 
     echo "=============================================================="
     echo ""
     echo "DDEV-Specific Commands:"
-    echo "  login          - Authenticate Tailscale (requires TS_AUTHKEY env var)"
+    echo "  login          - Authenticate Tailscale (prioritizes TS_AUTHKEY env var)"
     echo "  launch         - Share and launch the site in your browser"
     echo "  share          - Share the site (runs in background)"
     echo "  stat           - Show Tailscale status (self and active peers only)"
