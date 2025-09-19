@@ -79,7 +79,7 @@ teardown() {
 
   # Test tailscale command exists (should not crash)
   run ddev tailscale status
-  # Command should execute (may show error but shouldn't crash)
+  assert_success
 }
 
 
@@ -94,15 +94,18 @@ teardown() {
 
   # Test stat command (should not fail even without auth)
   run ddev tailscale stat
-  # Command should execute (may show not logged in, but shouldn't crash)
+  assert_success
 
   # Test proxy command
   run ddev tailscale proxy
-  # Command should execute
+  assert_success
 
   # Test share and launch commands (should not crash)
   run ddev tailscale share --bg
+  assert_success
+
   run ddev tailscale launch
+  assert_success
 }
 @test "tailscale share --public forwards correctly" {
   set -eu -o pipefail
@@ -113,7 +116,7 @@ teardown() {
 
   # Should use funnel (public) and not pass --public to tailscale CLI
   run ddev tailscale share --public --bg
-  # Command should execute (may show error if not logged in, but shouldn't crash)
+  assert_success
 }
 
 @test "tailscale arbitrary args are forwarded" {
@@ -125,10 +128,10 @@ teardown() {
 
   # Should forward all args except --public
   run ddev tailscale status
-  # Command should execute (may show error if not logged in, but shouldn't crash)
+  assert_success
 
   run ddev tailscale ping 127.0.0.1
-  # Command should execute (may show error if not logged in, but shouldn't crash)
+  assert_success
 }
 
 
