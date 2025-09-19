@@ -34,7 +34,8 @@ post_install_actions:
     echo "🚀 ddev-tailscale-router installed successfully!"
     echo "Next steps:"
     echo "1. Get your Tailscale auth key from https://tailscale.com/kb/1085/auth-keys"
-    echo "2. Set it in your environment using: 'echo \"export TS_AUTHKEY=tskey-auth-your-key-here\" >> ~/.bashrc'". Optionally, you can use 'ddev tailscale login' to login interactively instead of using an auth key.
+    echo "2. Set it in your environment using: 'echo \"export TS_AUTHKEY=tskey-auth-your-key-here\" >> ~/.bashrc'".
+    echo "   Optionally, you can use 'ddev tailscale login' to login interactively instead of using an auth key."
     echo "3. Run: 'ddev restart'"
     echo "4. To access your site over Tailscale, run 'ddev tailscale launch'"
     echo "5. Optionally, add extra Tailscale arguments by setting TS_EXTRA_ARGS in your environment."
