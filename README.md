@@ -122,28 +122,30 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 
 | Command | Description |
 | ------- | ----------- |
-| `ddev tailscale launch [--public]` | Launch your project's Tailscale URL in browser (`--public` uses Funnel mode for public access) |
-| `ddev tailscale share [--public]` | Start sharing your project (`--public` uses Funnel mode for public access) |
-| `ddev tailscale stop` | Stop sharing |
+| `ddev tailscale launch [--public]` | Share and launch your project's Tailscale URL in your browser (`--public` uses Funnel mode for public access) |
+| `ddev tailscale share [--public] [--port=<port>]` | Start sharing your project (`--public` uses Funnel mode for public access, `--port` sets the local port) |
+| `ddev tailscale stop` | Stop sharing and reset proxy/funnel configuration |
 | `ddev tailscale stat` | Show Tailscale status for self and active peers |
 | `ddev tailscale proxystat` | Show Funnel/Serve (proxy) status |
-| `ddev tailscale url` | Get your project's Tailscale Funnel URL |
-| `ddev tailscale login` | Authenticate with Tailscale interactively |
+| `ddev tailscale url` | Get your project's Tailscale URL |
+| `ddev tailscale login` | Authenticate with Tailscale |
 | `ddev tailscale <any tailscale command>` | Run any Tailscale CLI command in the web container |
 
-
-> **Note:** The add-on assumes your project uses the port configured in `DDEV_ROUTER_HTTP_PORT` (usually port `80`). To use a custom port, add `--port=<port number>` to your command. For example, `ddev tailscale share --port=8025 --public` will expose the Mailpit service to the internet. Only ports inside the `web` service are supported.
+**Notes:**
+- The add-on uses the port configured in `DDEV_ROUTER_HTTP_PORT` (default: `80`). To use a custom port, add `--port=<port number>` to your command. Example: `ddev tailscale share --port=8025 --public` exposes the Mailpit service to the internet. Only ports inside the `web` service are supported.
+- The script now checks authentication before running commands and provides clearer error messages and guidance for login.
+- Proxy/funnel status and reset are handled automatically to avoid port conflicts and stale configurations.
 
 ## Advanced Commands
 
-[Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) or [Tailscale Funnel](https://tailscale.com/kb/1311/tailscale-funnel) commands can be used to serve custom ports or files on your TailNet Server. You would need to run `ddev tailscale stop` first. 
+
+[Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) and [Tailscale Funnel](https://tailscale.com/kb/1311/tailscale-funnel) commands can be used to serve custom ports or files on your TailNet Server. Run `ddev tailscale stop` first to reset any existing proxy/funnel configuration.
 
 ```bash
 # To serve a ReactJS application running on port 8443
 ddev tailscale stop
 ddev tailscale serve --bg --https=8443 localhost:5173
 ```
-    
 
 Only ports `8443`, `443`, and `10000` are supported by `tailscale funnel`.
 
@@ -151,7 +153,11 @@ Only ports `8443`, `443`, and `10000` are supported by `tailscale funnel`.
 ## Troubleshooting
 
 
-If you get an error while running the share command, try logging out using `ddev tailscale logout` and then run your command again (`ddev tailscale share`, `ddev tailscale launch`, or your custom command).
+If you get an error while running the share command, check your authentication status:
+- Make sure your `TS_AUTHKEY` environment variable is set and valid.
+- Run `ddev tailscale login` to authenticate interactively if needed.
+- If you encounter port conflicts or stale proxy/funnel handlers, the script will attempt to reset and retry automatically.
+If problems persist, try logging out using `ddev tailscale logout` and then rerun your command (`ddev tailscale share`, `ddev tailscale launch`, or your custom command).
 
 
 ## Components of the Repository
