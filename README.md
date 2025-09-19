@@ -137,7 +137,7 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 ## Advanced Commands
 
 
-[Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) and [Tailscale Funnel](https://tailscale.com/kb/1311/tailscale-funnel) commands can be used to serve custom ports or files on your TailNet Server. Run `ddev tailscale stop` first to reset any existing proxy/funnel configuration.
+[Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) and [Tailscale Funnel](https://tailscale.com/kb/1311/tailscale-funnel) commands can be used to serve custom ports or files on your TailNet Server. Run `ddev tailscale stop` first to reset any existing proxy/funnel configuration, if you want to reuse the same port.
 
 ```bash
 # To serve a ReactJS application running on port 8443
