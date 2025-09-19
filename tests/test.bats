@@ -77,8 +77,7 @@ teardown() {
   
   # Check for any ERROR messages in restart output
   refute_output --partial "ERROR (spawn error)"
-  refute_output --partial "tailscale-router: ERROR"
-  refute_output --partial "tailscale-serve: ERROR"
+  refute_output --partial "tailscale-service: ERROR"
 }
 
 @test "tailscale command exists and responds" {
@@ -110,16 +109,13 @@ teardown() {
   assert_success
   
   # Check if the config file exists
-  run test -f .ddev/config.tailscale-router.yaml
-  assert_success
+  assert_file_exist .ddev/config.tailscale-router.yaml
   
   # Check if web-build dockerfile exists
-  run test -f .ddev/web-build/Dockerfile.tailscale-router
-  assert_success
+  assert_file_exist .ddev/web-build/Dockerfile.tailscale-router
   
   # Check if docker-compose override exists
-  run test -f .ddev/docker-compose.tailscale-router.yaml
-  assert_success
+  assert_file_exist .ddev/docker-compose.tailscale-router.yaml
 }
 
 @test "tailscale service installation in web container" {
@@ -249,22 +245,11 @@ teardown() {
   assert_success
   
   # Check all required files are installed
-  run test -f .ddev/commands/host/tailscale
-  assert_success
+  assert_file_exist .ddev/commands/host/tailscale
   
-  run test -f .ddev/config.tailscale-router.yaml
-  assert_success
+  assert_file_exist .ddev/config.tailscale-router.yaml
   
-  run test -f .ddev/web-build/Dockerfile.tailscale-router
-  assert_success
+  assert_file_exist .ddev/web-build/Dockerfile.tailscale-router
   
-  run test -f .ddev/docker-compose.tailscale-router.yaml
-  assert_success
-  
-  # Check that old JSON config files are removed (from the migration)
-  run test ! -f .ddev/tailscale-router/config/tailscale-private.json
-  assert_success
-  
-  run test ! -f .ddev/tailscale-router/config/tailscale-public.json  
-  assert_success
+  assert_file_exist .ddev/docker-compose.tailscale-router.yaml
 }

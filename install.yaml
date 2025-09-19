@@ -8,6 +8,26 @@ project_files:
 
 ddev_version_constraint: '>= v1.24.3'
 
+pre_install_actions:
+  - |
+    #ddev-nodisplay
+    #ddev-description:Removing old files
+    has_old_files=false
+    for file in "${DDEV_APPROOT}/.ddev/tailscale-router/config/tailscale-private.json" "${DDEV_APPROOT}/.ddev/tailscale-router/config/tailscale-public.json" "${DDEV_APPROOT}/.ddev/.env.tailscale-router" ; do
+      if [ ! -f "${file}" ]; then
+        continue
+      fi
+      if grep -q '#ddev-generated' "${file}"; then
+        rm -f "${file}"
+      else
+        echo "${file} needs to be removed but has been modified by the user. Please check it and remove it"
+        has_old_files=true
+      fi
+    done
+    if [ "${has_old_files}" = true ]; then
+      exit 2
+    fi
+
 post_install_actions:
   - |
     #ddev-description:Setup instructions for Tailscale router
@@ -16,4 +36,9 @@ post_install_actions:
     echo "1. Get your Tailscale auth key from https://tailscale.com/kb/1085/auth-keys"
     echo "2. Set it in your environment using: 'echo \"export TS_AUTHKEY=tskey-auth-your-key-here\" >> ~/.bashrc'"
     echo "3. Run: 'ddev restart'"
+    echo "4. To access your site over Tailscale, run 'ddev tailscale launch'"
+    echo "5. Optionally, add extra Tailscale arguments by setting TS_EXTRA_ARGS in your environment."
+    echo "   For example, to enable ssh, add '--ssh': 'ddev dotenv set .ddev/.env --ts-extra-args=\"--ssh\" '"
+    echo " "
+    echo "For more helpful commands, run 'ddev tailscale --help'"
     echo "For more info: https://github.com/atj4me/ddev-tailscale-router"
