@@ -140,7 +140,7 @@ teardown() {
   assert_success
 }
 
-@test "tailscale basic commands work without auth" {
+@test "tailscale basic commands work" {
   set -eu -o pipefail
   
   run ddev add-on get "${DIR}"
