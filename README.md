@@ -47,7 +47,7 @@ Before installing the add-on:
     echo 'export TS_AUTHKEY=tskey-auth-your-key-here' >> ~/.bashrc
     ```
 
-  Alternatively, you can also set up authentication using `ddev tailscale login` after your project starts. This provides secure, interactive access for your DDEV project.
+    Alternatively, you can also set up authentication using `ddev tailscale login` after your project starts. This provides secure, interactive access for your DDEV project.
 
 
 4. **For public access**: To enable Funnel (public sharing), configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) in the [Tailscale admin console](https://login.tailscale.com/admin/acls) by adding the `funnel` node attribute:
@@ -98,11 +98,9 @@ Your project's permanent Tailscale URL will look like: `https://<project-name>.<
 ### Configure Privacy (Optional)
 
 
-By default, your project is only accessible to devices on your Tailscale network (private mode). This happens automatically when the project starts. You can stop sharing using:
-```bash
-ddev tailscale stop
-```
+By default, the project doesn't connect to Tailscale. To start sharing with your tailnet: 
 
+`ddev tailscale share`
 
 To make your project publicly accessible (Funnel mode):
 
@@ -143,11 +141,11 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 
 ```bash
 # To serve a ReactJS application running on port 8443
-ddev tailscale stop
 ddev tailscale serve --bg --https=8443 localhost:5173
 ```
+This will share the main project in the `443` port and have the React app in a different `8443` port. 
 
-Only ports `8443`, `443`, and `10000` are supported by `tailscale funnel`.
+Only ports `8443`, `443`, and `10000` are supported by `tailscale funnel`. 
 
 
 ## Troubleshooting
