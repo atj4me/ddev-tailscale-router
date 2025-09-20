@@ -47,13 +47,10 @@ Before installing the add-on:
     echo 'export TS_AUTHKEY=tskey-auth-your-key-here' >> ~/.bashrc
     ```
 
-    Alternatively, you can set it per project (**NOT RECOMMENDED**, because `.ddev/.env.tailscale-router` is not intended to store secrets) using:
+    Alternatively, you can also set up authentication using `ddev tailscale login` after your project starts. This provides secure, interactive access for your DDEV project.
 
-    ```bash
-    ddev dotenv set .ddev/.env.tailscale-router --ts-authkey=tskey-auth-your-key-here
-    ```
 
-4. **For public access**: Configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) to enable Funnel. Add the `funnel` node attribute to your ACL policy in the [Tailscale admin console](https://login.tailscale.com/admin/acls):
+4. **For public access**: To enable Funnel (public sharing), configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) in the [Tailscale admin console](https://login.tailscale.com/admin/acls) by adding the `funnel` node attribute:
 
     ```json
     {
@@ -66,32 +63,55 @@ Before installing the add-on:
     }
     ```
 
+5. **For SSL certificate generation** (Optional): To run the command `tailscale cert` from the container, the machine needs corresponsing access by adding a `certs` capability inside node attributes: 
+    
+    ```json
+    "nodeAttrs": [
+      {
+        "target": ["*"],
+        "attr":   ["tailscale.com/cap/certs"],
+      },
+    ],
+    ```
+
 ## Installation
 
 ```bash
 ddev add-on get atj4me/ddev-tailscale-router
 ddev restart
+```
 
-# Launch your project's Tailscale URL in browser
+
+To launch your project's Tailscale URL in your browser:
+```bash
 ddev tailscale launch
-# Or get your project's Tailscale URL
+```
+
+To get your project's Tailscale URL:
+```bash
 ddev tailscale url
 ```
 
-Your project's permanent Tailscale URL will look like: `https://<project-name>.<your-tailnet>.ts.net`. Also, it can be found in your [Tailscale admin console](https://login.tailscale.com/admin/machines).
+
+Your project's permanent Tailscale URL will look like: `https://<project-name>.<your-tailnet>.ts.net`. You can also find it in your [Tailscale admin console](https://login.tailscale.com/admin/machines).
 
 ### Configure Privacy (Optional)
 
-By default, your project is only accessible to devices on your Tailscale network (private mode). You can make it publicly accessible:
+
+By default, the project doesn't connect to Tailscale. To start sharing with your tailnet: 
+
+`ddev tailscale share`
+
+To make your project publicly accessible (Funnel mode):
 
 ```bash
-# Switch to public mode (accessible to anyone on the internet)
-ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=public
-ddev restart
+ddev tailscale share --public
+```
 
-# Switch back to private mode (default)
-ddev dotenv set .ddev/.env.tailscale-router --ts-privacy=private
-ddev restart
+To revert to private mode (only accessible to your Tailscale devices):
+
+```bash
+ddev tailscale share
 ```
 
 ## Usage
@@ -100,43 +120,56 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 
 | Command | Description |
 | ------- | ----------- |
-| `ddev tailscale <anything>` | Run any Tailscale CLI command |
-| `ddev tailscale launch` | Launch your project's Tailscale URL in browser |
-| `ddev tailscale status` | Show Tailscale status |
-| `ddev tailscale ping <device>` | Ping a Tailscale device |
-| `ddev tailscale stat` | Show status with self and active peers only |
-| `ddev tailscale proxy` | Show funnel status |
+| `ddev tailscale launch [--public]` | Share and launch your project's Tailscale URL in your browser (`--public` uses Funnel mode for public access) |
+| `ddev tailscale share [--public] [--port=<port>]` | Start sharing your project (`--public` uses Funnel mode for public access, `--port` sets the local port) |
+| `ddev tailscale stop` | Stop sharing and reset proxy/funnel configuration |
+| `ddev tailscale stat` | Show Tailscale status for self and active peers |
+| `ddev tailscale proxystat` | Show Funnel/Serve (proxy) status |
 | `ddev tailscale url` | Get your project's Tailscale URL |
-| `ddev logs -s tailscale-router` | Show logs for the Tailscale router service |
+| `ddev tailscale login` | Authenticate with Tailscale |
+| `ddev tailscale <any tailscale command>` | Run any Tailscale CLI command in the web container |
 
-## Advanced Customization
+**Notes:**
+- The add-on uses the port configured in `DDEV_ROUTER_HTTP_PORT` (default: `80`). To use a custom port, add `--port=<port number>` to your command. Example: `ddev tailscale share --port=8025 --public` exposes the Mailpit service to the internet. Only ports inside the `web` service are supported.
+- The script now checks authentication before running commands and provides clearer error messages and guidance for login.
+- Proxy/funnel status and reset are handled automatically to avoid port conflicts and stale configurations.
 
-To change the used Docker image:
+## Advanced Commands
+
+
+[Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) and [Tailscale Funnel](https://tailscale.com/kb/1311/tailscale-funnel) commands can be used to serve custom ports or files on your TailNet Server. Run `ddev tailscale stop` first to reset any existing proxy/funnel configuration, if you want to reuse the same port.
 
 ```bash
-ddev dotenv set .ddev/.env.tailscale-router --ts-docker-image=tailscale/tailscale:latest
-ddev restart
+# To serve a ReactJS application running on port 8443
+ddev tailscale serve --bg --https=8443 localhost:5173
 ```
+This will share the main project in the `443` port and have the React app in a different `8443` port. 
 
-All customization options (use with caution):
+Only ports `8443`, `443`, and `10000` are supported by `tailscale funnel`. 
 
-| Variable | Flag | Default |
-| -------- | ---- | ------- |
-| `TS_DOCKER_IMAGE` | `--ts-docker-image` | `tailscale/tailscale:latest` |
-| `TS_AUTHKEY` | `--ts-authkey` | (none, required, not recommended to set in `.ddev/.env.tailscale-router`) |
-| `TS_PRIVACY` | `--ts-privacy` | `private` (`private`/`public`) |
+
+## Troubleshooting
+
+
+If you get an error while running the share command, check your authentication status:
+- Make sure your `TS_AUTHKEY` environment variable is set and valid.
+- Run `ddev tailscale login` to authenticate interactively if needed.
+- If you encounter port conflicts or stale proxy/funnel handlers, the script will attempt to reset and retry automatically.
+If problems persist, try logging out using `ddev tailscale logout` and then rerun your command (`ddev tailscale share`, `ddev tailscale launch`, or your custom command).
+
 
 ## Components of the Repository
 
-- **`install.yaml`** - DDEV add-on installation manifest that copies necessary files and shows setup instructions
-- **`docker-compose.tailscale-router.yaml`** - Core Docker Compose configuration defining the `tailscale-router` service with Tailscale authentication and `socat` traffic forwarding
-- **`commands/host/tailscale`** - Custom DDEV host command providing access to Tailscale CLI with helpful shortcuts
-- **`tailscale-router/config/`** - JSON configuration files for Tailscale's serve command:
-  - `tailscale-private.json` - Private sharing configuration (default)
-  - `tailscale-public.json` - Public sharing configuration
-- **`tests/test.bats`** - Automated test script for verifying Tailscale integration
-- **`.github/workflows/tests.yml`** - GitHub Actions for automated testing on push and schedule
-- **`.github/ISSUE_TEMPLATE/` and `PULL_REQUEST_TEMPLATE.md`** - Templates for streamlined contributions
+
+- **`install.yaml`** – DDEV add-on installation manifest, copies files and provides setup instructions
+- **`docker-compose.tailscale-router.yaml`** – Docker Compose config for the Tailscale router service, including authentication and proxy settings
+- **`config.tailscale-router.yaml`** – Main YAML configuration for Tailscale router settings
+- **`commands/host/tailscale`** – Bash wrapper for DDEV host, provides Tailscale CLI access and shortcuts
+- **`web-build/Dockerfile.tailscale-router`** – Dockerfile for building the web container with Tailscale support
+- **`tests/test.bats`** – Automated BATS test script for verifying Tailscale integration
+- **`tests/testdata/`** – Test data for automated tests
+- **`.github/workflows/tests.yml`** – GitHub Actions workflow for automated testing
+- **`.github/ISSUE_TEMPLATE/` and `PULL_REQUEST_TEMPLATE.md`** – Contribution and PR templates
 
 ## Testing
 
@@ -150,6 +183,7 @@ bats tests/test.bats
 
 Tests also run automatically in GitHub Actions on every push.
 
+
 ## Contributing
 
 Contributions are welcome! If you have suggestions, bug reports, or feature requests, please:
@@ -158,6 +192,7 @@ Contributions are welcome! If you have suggestions, bug reports, or feature requ
 2. Create a new branch.
 3. Make your changes.
 4. Submit a pull request.
+
 
 ## License
 

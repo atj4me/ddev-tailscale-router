@@ -1,0 +1,10 @@
+#ddev-generated
+# This configuration adds Tailscale routing capabilities to the web container.
+web_extra_daemons:
+  - name: tailscale-service
+    command: tailscaled --statedir=${TS_STATE_DIR:-/var/lib/tailscale} --tun=userspace-networking
+    directory: /usr/sbin
+
+hooks:
+  pre-stop:
+    - exec: tailscale logout || true

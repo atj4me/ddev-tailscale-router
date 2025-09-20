@@ -1,25 +1,362 @@
 #!/usr/bin/env bash
 
 ## #ddev-generated: If you want to edit and own this file, remove this line.
-## Description: Tailscale command with launch functionality
-## Usage: tailscale [launch|stat|proxy|url|args...]
-## Example: "ddev tailscale launch"
+## Description: Tailscale command with launch/share functionality
+## Usage: tailscale [launch|share|stat|proxy|url|args...]
+## Example: "ddev tailscale launch" or "ddev tailscale share"
 
-if [ "$1" = "launch" ] || [ $# -eq 0 ]; then
-    TAILSCALE_URL=$(ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1)
-    
-    if [ -z "$TAILSCALE_URL" ]; then
-        echo "Error: Could not retrieve Tailscale URL."
-        exit 1
+# Helper to run tailscale in the web container
+tailscale_web() {
+    ddev exec -s web tailscale "$@"
+}
+
+get_tailscale_url() {
+    local url
+    url=$(ddev exec -s web bash -c 'tailscale status --peers=false --json 2>/dev/null | jq -r ".Self.DNSName" 2>/dev/null | sed "s/\.$//"' 2>/dev/null)
+    if [ -n "$url" ] && [ "$url" != "null" ]; then
+        echo "https://$url"
+    else
+        return 1
+    fi
+}
+
+check_if_sharing() {
+    # Check if serve is already running by looking at serve status
+    if ddev tailscale proxystat >/dev/null 2>&1; then
+        # Check if there's actually a configuration
+        local serve_output
+        serve_output=$(ddev tailscale proxystat 2>/dev/null || echo "")
+        if [[ "$serve_output" == *"No serve config"* ]] || [ -z "$serve_output" ]; then
+            return 1  # Not sharing
+        else
+            return 0  # Already sharing
+        fi
+    else
+        return 1  # Not sharing (command failed, likely not authenticated)
+    fi
+}
+
+tailscale_login() {
+    if [ -z "${TS_AUTHKEY:-}" ]; then
+        echo "Error: TS_AUTHKEY environment variable is required for login"
+        echo "Set it in your shell config: export TS_AUTHKEY=tskey-auth-your-key-here"
+        return 1
+    fi
+    echo "Authenticating with Tailscale..."
+    if ! ddev exec -s web bash -c 'tailscale up --auth-key="$TS_AUTHKEY" --hostname="$DDEV_SITENAME" ${TS_EXTRA_ARGS:-}' 2>/dev/null; then
+        echo "Error: Failed to authenticate with Tailscale"
+        echo "Please check your TS_AUTHKEY and network connectivity"
+        return 1
+    fi
+    echo "Successfully authenticated with Tailscale"
+    return 0
+}
+
+check_tailscale_auth() {
+    # First check if tailscale command exists
+    if ! ddev exec -s web which tailscale >/dev/null 2>&1; then
+        echo "Error: Tailscale not installed in web container"
+        return 1
     fi
     
-    ddev launch "$TAILSCALE_URL"
-elif [ "$1" = "stat" ]; then
-    ddev exec -s tailscale-router tailscale status --self --peers=false --active=true
-elif [ "$1" = "proxy" ]; then
-    ddev exec -s tailscale-router tailscale funnel status
-elif [ "$1" = "url" ]; then
-    ddev exec -s tailscale-router tailscale funnel status | grep -o 'https://[^[:space:]]*' | head -1
-else
-    ddev exec -s tailscale-router tailscale "$@"
+    # Check if tailscale is running and authenticated
+    local auth_status
+    auth_status=$(ddev exec -s web tailscale status --json 2>/dev/null | jq -r '.BackendState' 2>/dev/null || echo "")
+    
+    # Also check if we can get basic status without JSON (fallback method)
+    if [ "$auth_status" != "Running" ]; then
+        # Try a simpler check - if status command works without errors, we're likely authenticated
+        if ddev exec -s web tailscale status >/dev/null 2>&1; then
+            return 0  # Status command succeeded, we're authenticated
+        fi
+    else
+        return 0  # JSON check shows we're running
+    fi
+    
+    # Not authenticated, try to authenticate if we have auth key
+    if [ -n "${TS_AUTHKEY:-}" ]; then
+        echo "Tailscale not authenticated. Attempting to login..."
+        tailscale_login
+        return $?
+    else
+        echo "Error: Tailscale not authenticated and no TS_AUTHKEY provided"
+        echo "Please set TS_AUTHKEY environment variable or run 'ddev tailscale login'"
+        return 1
+    fi
+}
+
+reset_tailscale_serve() {
+    echo "Resetting any existing Tailscale serve configurations..."
+    # Use --quiet flag if available, or suppress stderr for non-existent handlers
+    ddev exec -s web tailscale serve reset >/dev/null 2>&1 || true
+    ddev exec -s web tailscale serve --bg off >/dev/null 2>&1 || true  
+    ddev exec -s web tailscale funnel --bg off >/dev/null 2>&1 || true
+    echo "Reset complete."
+}
+
+run_tailscale_share() {
+    local cmd="serve"
+    local port="${DDEV_ROUTER_HTTP_PORT:-80}"
+    local is_public=false
+    
+    # Parse flags from arguments
+    for arg in "$@"; do
+        case $arg in
+            --public)
+                echo "⚠️  Sharing your local development environment publicly can expose sensitive data."
+                echo "    Ensure you understand the implications before proceeding."
+                cmd="funnel"
+                is_public=true
+                ;;
+            --port=*)
+                port="${arg#--port=}"
+                ;;
+            --bg)
+                # Handle --bg flag
+                ;;
+        esac
+    done
+    
+    # Check authentication - this MUST succeed
+    if ! check_tailscale_auth; then
+        echo "Error: Authentication required for Tailscale sharing"
+        return 1
+    fi
+    
+    echo "Starting Tailscale $cmd on port $port..."
+    
+    # Execute the serve/funnel command
+    local output
+    local share_status
+    output=$(ddev exec -s web tailscale "$cmd" --bg "127.0.0.1:$port" 2>&1)
+    share_status=$?
+    
+    # Handle port conflicts by resetting and retrying once
+    if [[ "$output" == *"foreground already exists"* ]]; then
+        echo "Port conflict detected, resetting and retrying..."
+        reset_tailscale_serve
+        sleep 1
+        output=$(ddev exec -s web tailscale "$cmd" --bg "127.0.0.1:$port" 2>&1)
+        share_status=$?
+    fi
+    
+    if [ $share_status -ne 0 ]; then
+        echo "Error: Tailscale $cmd failed. Output:"
+        echo "$output"
+        echo ""
+        echo "Failed to run tailscale $cmd; error=exit status $share_status"
+        return $share_status
+    fi
+    
+    # Replace the disable proxy instruction with ddev-specific command
+    echo "$output" | sed "s/To disable the proxy, run: tailscale $cmd --https=443 off/To disable the proxy, run: ddev tailscale stop/"
+    
+    if [ "$is_public" = true ]; then
+        echo ""
+        echo "🌐 Your site is now publicly accessible via Tailscale Funnel"
+    else
+        echo ""
+        echo "🔒 Your site is shared privately within your Tailscale network"
+    fi
+    
+    return 0
+}
+
+stop_tailscale_share() {
+    echo "Stopping Tailscale sharing..."
+    
+    # Stop both serve and funnel - suppress "handler does not exist" errors
+    ddev exec -s web tailscale serve --https=443 off >/dev/null 2>&1 || true
+    ddev exec -s web tailscale funnel --https=443 off >/dev/null 2>&1 || true
+    
+    # Reset all configurations - suppress "handler does not exist" errors
+    ddev exec -s web tailscale serve reset >/dev/null 2>&1 || true
+    
+    echo "Tailscale sharing stopped"
+}
+
+# Main script logic
+if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "help" ] || [ $# -eq 0 ]; then
+    echo "DDEV Tailscale Add-on - Secure project sharing via Tailscale"
+    echo "=============================================================="
+    echo ""
+    echo "DDEV-Specific Commands:"
+    echo "  login          - Authenticate Tailscale (prioritizes TS_AUTHKEY env var)"
+    echo "  launch         - Share and launch the site in your browser"
+    echo "  share          - Share the site (runs in background)"
+    echo "  stat           - Show Tailscale status (self and active peers only)"
+    echo "  proxystat      - Show Tailscale funnel (proxy) status"
+    echo "  url            - Show the Tailscale URL for this site"
+    echo "  stop           - Stop Tailscale sharing/proxying"
+    echo ""
+    echo "Share options:"
+    echo "  --public       - Use Tailscale Funnel to share publicly (less secure)"
+    echo "  --port=<port>  - Specify a different local port to share (default: ${DDEV_ROUTER_HTTP_PORT:-80})"
+    echo ""
+    echo "DDEV Examples:"
+    echo "  ddev tailscale share           # Share privately within your tailnet"
+    echo "  ddev tailscale share --public  # Share publicly via Tailscale Funnel"
+    echo "  ddev tailscale launch          # Share and open in browser"
+    echo "  ddev tailscale login           # Authenticate with Tailscale"
+    echo "  ddev tailscale stop            # Stop sharing"
+    echo ""
+    echo "=============================================================="
+    echo ""
+    
+    # Show native Tailscale help
+    echo "Native Tailscale CLI Help:"
+    echo "=========================="
+    if ddev exec -s web which tailscale >/dev/null 2>&1; then
+        ddev exec -s web tailscale --help 2>/dev/null || echo "Tailscale help not available (may require authentication)"
+    else
+        echo "Tailscale not installed in web container"
+    fi
+    echo ""
+    echo "=============================================================="
+    echo "Note: All native tailscale commands can be used with 'ddev tailscale <command>'"
+    echo "Example: ddev tailscale status, ddev tailscale ping <ip>, etc."
+    exit 0
 fi
+
+case "$1" in
+    "login")
+        tailscale_login
+        ;;
+    "launch")
+         # Check if already sharing first
+        if ! check_tailscale_auth; then
+            exit 1
+        fi
+        
+        if check_if_sharing; then
+            echo "Tailscale sharing is already active."
+            echo ""
+            echo "Getting Tailscale URL..."
+            TAILSCALE_URL=$(get_tailscale_url)
+            if [ -n "$TAILSCALE_URL" ]; then
+                echo "Launching: $TAILSCALE_URL"
+                # For tests, don't actually launch browser
+                if [ -n "${BATS_TEST_FILENAME:-}" ]; then
+                    echo "Test mode: would launch $TAILSCALE_URL"
+                else
+                    ddev launch "$TAILSCALE_URL"
+                fi
+            else
+                echo "Warning: Could not retrieve Tailscale URL automatically."
+                echo "Your site should be accessible at: https://<sitename>.<tailnet>.ts.net"
+            fi
+        else
+            echo "Starting Tailscale sharing..."
+            if run_tailscale_share "${@:2}"; then
+                echo ""
+                echo "Getting Tailscale URL..."
+                sleep 1
+                TAILSCALE_URL=$(get_tailscale_url)
+                if [ -n "$TAILSCALE_URL" ]; then
+                    echo "Launching: $TAILSCALE_URL"
+                    # For tests, don't actually launch browser
+                    if [ -n "${BATS_TEST_FILENAME:-}" ]; then
+                        echo "Test mode: would launch $TAILSCALE_URL"
+                    else
+                        ddev launch "$TAILSCALE_URL"
+                    fi
+                else
+                    echo "Warning: Could not retrieve Tailscale URL automatically."
+                    echo "Your site should be accessible at: https://<sitename>.<tailnet>.ts.net"
+                fi
+            fi
+        fi
+        ;;
+    "share")
+        run_tailscale_share "${@:2}"
+        ;;
+    "stop")
+        stop_tailscale_share
+        ;;
+    "stat")
+        if ! check_tailscale_auth; then
+            return 1
+        fi
+        tailscale_web status --self --peers=false --active=true
+        ;;
+    "proxystat")
+        if ! check_tailscale_auth; then
+            return 1
+        fi
+        tailscale_web funnel status
+        ;;
+    "url")
+        if ! check_tailscale_auth; then
+            return 1
+        fi
+        TAILSCALE_URL=$(get_tailscale_url)
+        if [ -n "$TAILSCALE_URL" ]; then
+            echo "$TAILSCALE_URL"
+        else
+            echo "Error: Could not retrieve Tailscale URL. Is Tailscale authenticated and running?"
+            return 1
+        fi
+        ;;
+    *)
+        # Forward all other commands directly to tailscale
+        # Most commands require authentication, but some basic ones don't
+        case "$1" in
+            "version"|"--version")
+                tailscale_web version
+                ;;
+            "--help"|"help")
+                # These are handled at the top of the script now
+                echo "Usage: ddev tailscale [login|launch|share|stat|proxystat|url|stop|args...]"
+                echo "Run 'ddev tailscale' with no arguments for full help."
+                ;;
+            "--native-help")
+                # Show only native tailscale help
+                tailscale_web --help
+                ;;
+            "ping")
+                # Ping might work without full auth in some cases, but generally requires it
+                if [[ "${2:-}" == "--help" ]]; then
+                    tailscale_web ping --help
+                else
+                    if ! check_tailscale_auth; then
+                        return 1
+                    fi
+                    tailscale_web "$@"
+                fi
+                ;;
+            "serve")
+                # Serve commands require authentication
+                case "${2:-}" in
+                    "reset")
+                        # Reset might work without auth, but still check installation
+                        if ! ddev exec -s web which tailscale >/dev/null 2>&1; then
+                            echo "Error: Tailscale not installed in web container"
+                            return 1
+                        fi
+                        reset_tailscale_serve
+                        ;;
+                    "status"|*)
+                        if ! check_tailscale_auth; then
+                            return 1
+                        fi
+                        tailscale_web "$@"
+                        ;;
+                esac
+                ;;
+            "status")
+                # Status requires authentication for meaningful output
+                if ! check_tailscale_auth; then
+                    return 1
+                fi
+                tailscale_web "$@"
+                ;;
+            *)
+                # All other commands require authentication
+                if ! check_tailscale_auth; then
+                    return 1
+                fi
+                tailscale_web "$@"
+                ;;
+        esac
+        ;;
+esac

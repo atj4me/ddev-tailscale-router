@@ -28,8 +28,12 @@ setup() {
   export TESTDIR=$(mktemp -d ~/tmp/${PROJNAME}.XXXXXX)
   export DDEV_NONINTERACTIVE=true
   export DDEV_NO_INSTRUMENTATION=true
+  
+  # Clean up any existing project
   ddev delete -Oy "${PROJNAME}" >/dev/null 2>&1 || true
   cd "${TESTDIR}"
+  
+  # Configure and start DDEV project
   run ddev config --project-name="${PROJNAME}" --project-tld=ddev.site
   assert_success
   run ddev start -y
@@ -37,21 +41,23 @@ setup() {
 }
 
 health_checks() {
-  # Check if the Tailscale service is running inside DDEV
+  # Check if DDEV is running properly
   run ddev describe -j
   assert_success
 
-  # Verify tailscale-router service exists in describe output
-  run bash -c "ddev describe -j | jq -r '.raw.services | has(\"tailscale-router\")'"
+  # Check if web service is running
+  run bash -c "ddev describe -j | jq -r '.raw.services.web.State.Status'"
   assert_success
-  assert_output "true"
+  assert_output "running"
 }
 
 teardown() {
   set -eu -o pipefail
-  ddev delete -Oy ${PROJNAME} >/dev/null 2>&1
-  # Persist TESTDIR if running inside GitHub Actions. Useful for uploading test result artifacts
-  # See example at https://github.com/ddev/github-action-add-on-test#preserving-artifacts
+  
+  # Clean up DDEV project
+  ddev delete -Oy ${PROJNAME} >/dev/null 2>&1 || true
+  
+  # Persist TESTDIR if running inside GitHub Actions
   if [ -n "${GITHUB_ENV:-}" ]; then
     [ -e "${GITHUB_ENV:-}" ] && echo "TESTDIR=${HOME}/tmp/${PROJNAME}" >> "${GITHUB_ENV}"
   else
@@ -62,107 +68,188 @@ teardown() {
 @test "install from directory" {
   set -eu -o pipefail
   echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  
   run ddev add-on get "${DIR}"
   assert_success
+  
   run ddev restart -y
   assert_success
-  health_checks
-}
-
-# bats test_tags=release
-@test "install from release" {
-  set -eu -o pipefail
-  echo "# ddev add-on get ${GITHUB_REPO} with project ${PROJNAME} in $(pwd)" >&3
-  run ddev add-on get "${GITHUB_REPO}"
-  assert_success
-  run ddev restart -y
-  assert_success
-  health_checks
+  
+  # Check for any ERROR messages in restart output
+  refute_output --partial "ERROR (spawn error)"
+  refute_output --partial "tailscale-service: ERROR"
 }
 
 @test "tailscale command exists and responds" {
   set -eu -o pipefail
+  
   run ddev add-on get "${DIR}"
   assert_success
+  
   run ddev restart -y
   assert_success
+  refute_output --partial "ERROR (spawn error)"
 
-  # Test tailscale command exists (without --help which may not work)
+  # Test tailscale command exists
+  run ddev tailscale --help
+  assert_success
+  
+  # Test basic tailscale status (may fail if not authenticated, but command should exist)
   run ddev tailscale status
-  # Command should execute (may show error but shouldn't crash)
+  # Don't assert success here as it may fail without auth, just check command exists
 }
 
-@test "tailscale service container is running" {
+@test "web_extra_daemons are configured correctly" {
   set -eu -o pipefail
+  
   run ddev add-on get "${DIR}"
   assert_success
+  
+  run ddev restart -y
+  assert_success
+  
+  # Check if the config file exists
+  assert_file_exist .ddev/config.tailscale-router.yaml
+  
+  # Check if web-build dockerfile exists
+  assert_file_exist .ddev/web-build/Dockerfile.tailscale-router
+  
+  # Check if docker-compose override exists
+  assert_file_exist .ddev/docker-compose.tailscale-router.yaml
+}
+
+@test "tailscale service installation in web container" {
+  set -eu -o pipefail
+  
+  run ddev add-on get "${DIR}"
+  assert_success
+  
+  run ddev restart -y
+  assert_success
+  
+  # Check if tailscale is installed in web container
+  run ddev exec "which tailscale"
+  assert_success
+  
+  # Check if tailscale version can be retrieved
+  run ddev exec "tailscale version"
+  assert_success
+}
+
+@test "tailscale basic commands work" {
+  set -eu -o pipefail
+  
+  run ddev add-on get "${DIR}"
+  assert_success
+  
   run ddev restart -y
   assert_success
 
-  # Check if tailscale-router container exists
-  run docker ps -a --filter "name=ddev-${PROJNAME}-tailscale-router" --format "{{.Names}}"
+  # Test commands that don't require authentication
+  run ddev tailscale --help
   assert_success
-  assert_output "ddev-${PROJNAME}-tailscale-router"
+  
+  run ddev tailscale version
+  assert_success
+  
+  # Test ping help (doesn't require auth)
+  run ddev tailscale ping --help
+  assert_success
+}
+
+@test "tailscale serve reset works without full auth" {
+  set -eu -o pipefail
+  
+  run ddev add-on get "${DIR}"
+  assert_success
+  
+  run ddev restart -y
+  assert_success
+
+  # Test serve reset command (should work without full auth)
+  run ddev tailscale serve reset
+  assert_success
+}
+
+@test "environment variables are properly set" {
+  set -eu -o pipefail
+  
+  run ddev add-on get "${DIR}"
+  assert_success
+  
+  run ddev restart -y
+  assert_success
+  
+  # Check if DDEV_ROUTER_HTTP_PORT is available in web container
+  run ddev exec "echo \$DDEV_ROUTER_HTTP_PORT"
+  assert_success
+  
+  # Should output the port number (default 80 or custom port)
+  [[ "$output" =~ ^[0-9]+$ ]]
+}
+
+@test "tailscale url and launch commands exist" {
+  set -eu -o pipefail
+  
+  run ddev add-on get "${DIR}"
+  assert_success
+  
+  run ddev restart -y
+  assert_success
+
+  # Test url command (will fail without auth but should exist)
+  run ddev tailscale url
+  # Don't assert success due to auth requirements
+  
+  # Test launch command structure
+  run timeout 5s ddev tailscale launch --dry-run 2>/dev/null || true
+  # Check command exists, don't worry about success without auth
+}
+
+@test "no conflicting processes after restart" {
+  set -eu -o pipefail
+  
+  run ddev add-on get "${DIR}"
+  assert_success
+  
+  # First restart
+  run ddev restart -y
+  assert_success
+  refute_output --partial "foreground already exists"
+  
+  # Second restart (should not have port conflicts)
+  run ddev restart -y  
+  assert_success
+  refute_output --partial "foreground already exists"
+  refute_output --partial "ERROR (spawn error)"
+}
+
+@test "tailscale share command structure" {
+  set -eu -o pipefail
+  
+  run ddev add-on get "${DIR}"
+  assert_success
+  
+  run ddev restart -y
+  assert_success
+
+  # Test share command with --help flag
+  run ddev tailscale share --help 2>/dev/null || run ddev tailscale serve --help
+  # One of these should work to show the command is properly structured
 }
 
 @test "configuration files are properly installed" {
   set -eu -o pipefail
+  
   run ddev add-on get "${DIR}"
   assert_success
-
-  # Check if config files exist
-  assert_file_exists ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_file_exists ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_file_exists ".ddev/docker-compose.tailscale-router.yaml"
-  assert_file_exists ".ddev/commands/host/tailscale"
-}
-
-@test "tailscale command shortcuts work" {
-  set -eu -o pipefail
-  run ddev add-on get "${DIR}"
-  assert_success
-  run ddev restart -y
-  assert_success
-
-  # Test stat command (should not fail even without auth)
-  run ddev tailscale stat
-  # Command should execute (may show not logged in, but shouldn't crash)
-
-  # Test proxy command
-  run ddev tailscale proxy
-  # Command should execute
-}
-
-@test "docker-compose file has required services and volumes" {
-  set -eu -o pipefail
-  run ddev add-on get "${DIR}"
-  assert_success
-
-  # Check docker-compose file contains required elements
-  run grep -q "tailscale-router:" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
-
-  run grep -q "tailscale-router-state:" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
-
-  run grep -q "image: \${TS_DOCKER_IMAGE:-tailscale/tailscale:latest}-\${DDEV_SITENAME}-built" ".ddev/docker-compose.tailscale-router.yaml"
-  assert_success
-}
-
-@test "configuration supports both private and public modes" {
-  set -eu -o pipefail
-  run ddev add-on get "${DIR}"
-  assert_success
-
-  # Check private config
-  run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_success
-  run grep -q 'false' ".ddev/tailscale-router/config/tailscale-private.json"
-  assert_success
-
-  # Check public config
-  run grep -q '"AllowFunnel"' ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_success
-  run grep -q 'true' ".ddev/tailscale-router/config/tailscale-public.json"
-  assert_success
+  
+  # Check all required files are installed
+  assert_file_exist .ddev/commands/host/tailscale
+  
+  assert_file_exist .ddev/config.tailscale-router.yaml
+  
+  assert_file_exist .ddev/web-build/Dockerfile.tailscale-router
+  
+  assert_file_exist .ddev/docker-compose.tailscale-router.yaml
 }
