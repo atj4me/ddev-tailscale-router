@@ -41,13 +41,13 @@ Before installing the add-on:
 2. [Enable HTTPS](https://tailscale.com/kb/1153/enabling-https) in your [DNS settings](https://login.tailscale.com/admin/dns) by clicking "Enable HTTPS..." (required for TLS certificate generation).
 3. [Generate an auth key](https://tailscale.com/kb/1085/auth-keys) in your [Keys settings](https://login.tailscale.com/admin/settings/keys) (ephemeral, reusable keys are recommended).
 
-    Get the auth key and add it to your environment by updating `~/.bashrc`, `~/.zshrc`, or another relevant shell configuration file with this command:
+    Store the auth key in this project only (`.ddev/.env` is not committed to git by default), instead of exporting it into every shell session:
 
     ```bash
-    echo 'export TS_AUTHKEY=tskey-auth-your-key-here' >> ~/.bashrc
+    ddev dotenv set .ddev/.env --ts-authkey=tskey-auth-your-key-here
     ```
 
-    Alternatively, you can also set up authentication using `ddev tailscale login` after your project starts. This provides secure, interactive access for your DDEV project.
+    Alternatively, skip the auth key altogether and authenticate interactively with `ddev tailscale login` after your project starts — it prints a login URL to open in your browser.
 
 
 4. **For public access**: To enable Funnel (public sharing), configure your [Access Control List (ACL)](https://tailscale.com/kb/1223/funnel#funnel-node-attribute) in the [Tailscale admin console](https://login.tailscale.com/admin/acls) by adding the `funnel` node attribute:
@@ -64,7 +64,7 @@ Before installing the add-on:
     ```
 
 5. **For SSL certificate generation** (Optional): To run the command `tailscale cert` from the container, the machine needs corresponsing access by adding a `certs` capability inside node attributes: 
-    
+
     ```json
     "nodeAttrs": [
       {

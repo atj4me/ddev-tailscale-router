@@ -28,6 +28,7 @@ setup() {
   export TESTDIR=$(mktemp -d ~/tmp/${PROJNAME}.XXXXXX)
   export DDEV_NONINTERACTIVE=true
   export DDEV_NO_INSTRUMENTATION=true
+  export CI=true
   
   # Clean up any existing project
   ddev delete -Oy "${PROJNAME}" >/dev/null 2>&1 || true
@@ -252,4 +253,20 @@ teardown() {
   assert_file_exist .ddev/web-build/Dockerfile.tailscale-router
   
   assert_file_exist .ddev/docker-compose.tailscale-router.yaml
+}
+
+# bats test_tags=release
+@test "install from release" {
+  set -eu -o pipefail
+  echo "# ddev add-on get ${GITHUB_REPO} with project ${PROJNAME} in $(pwd)" >&3
+
+  run ddev add-on get "${GITHUB_REPO}"
+  assert_success
+
+  run ddev restart -y
+  assert_success
+  refute_output --partial "ERROR (spawn error)"
+
+  run ddev exec "tailscale version"
+  assert_success
 }

@@ -13,7 +13,7 @@ on:
     inputs:
       debug_enabled:
         type: boolean
-        description: Debug with tmate
+        description: Enable remote debugging session
         required: false
         default: false
 
@@ -28,26 +28,14 @@ jobs:
   tests:
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
         ddev_version: [stable, HEAD]
-        os: [ubuntu-24.04, ubuntu-22.04-arm]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
 
     steps:
-
-      - name: Set up on Linux ARM runners
-        if: startsWith(matrix.os, 'ubuntu-22.04-arm')
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bashrc
-          brew install --build-from-source mkcert
-          brew install --build-from-source yq
-
-      - name: Run DDEV Add-on Tests
-        uses: ddev/github-action-add-on-test@v2
+      - uses: ddev/github-action-add-on-test@v2
         with:
           ddev_version: ${{ matrix.ddev_version }}
           token: ${{ secrets.GITHUB_TOKEN }}
