@@ -9,4 +9,7 @@ RUN rm -f /etc/apt/sources.list.d/php.list /etc/apt/sources.list.d/sury*
 RUN curl -fsSL https://tailscale.com/install.sh | sh
 
 ARG username
-RUN mkdir -p /var/lib/tailscale && chown -R ${username}:${username} /var/lib/tailscale
+# tailscaled binds its socket in /var/run/tailscale; the Tailscale package no
+# longer creates that dir without systemd (DDEV v1.25 images), so create it in
+# the image, owned by the user the daemon runs as.
+RUN mkdir -p /var/lib/tailscale /var/run/tailscale && chown -R ${username}:${username} /var/lib/tailscale /var/run/tailscale
