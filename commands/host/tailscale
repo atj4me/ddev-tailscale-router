@@ -39,7 +39,7 @@ check_if_sharing() {
 tailscale_login() {
     echo "Authenticating with Tailscale..."
     # With TS_AUTHKEY available in the web container (host environment or the
-    # project's .ddev/.env) this is non-interactive. Without a key, plain
+    # project's .ddev/.env.web.local) this is non-interactive. Without a key, plain
     # 'tailscale up' prints a login URL so you can authenticate in a browser.
     if ! ddev exec -s web bash -c 'if [ -n "${TS_AUTHKEY:-}" ]; then tailscale up --auth-key="$TS_AUTHKEY" --hostname="$DDEV_SITENAME" ${TS_EXTRA_ARGS:-}; else tailscale up --hostname="$DDEV_SITENAME" ${TS_EXTRA_ARGS:-}; fi'; then
         echo "Error: Failed to authenticate with Tailscale"
@@ -78,7 +78,7 @@ check_tailscale_auth() {
         return $?
     else
         echo "Error: Tailscale not authenticated and no TS_AUTHKEY provided"
-        echo "Please run 'ddev tailscale login' to authenticate interactively, or set a project-only auth key: 'ddev dotenv set .ddev/.env --ts-authkey=tskey-auth-your-key-here'"
+        echo "Please run 'ddev tailscale login' to authenticate interactively, or set a project-only auth key: 'ddev dotenv set .ddev/.env.web.local --ts-authkey=tskey-auth-your-key-here'"
         return 1
     fi
 }

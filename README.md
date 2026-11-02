@@ -41,10 +41,10 @@ Before installing the add-on:
 2. [Enable HTTPS](https://tailscale.com/kb/1153/enabling-https) in your [DNS settings](https://login.tailscale.com/admin/dns) by clicking "Enable HTTPS..." (required for TLS certificate generation).
 3. [Generate an auth key](https://tailscale.com/kb/1085/auth-keys) in your [Keys settings](https://login.tailscale.com/admin/settings/keys) (ephemeral, reusable keys are recommended).
 
-    Store the auth key in this project only (`.ddev/.env` is not committed to git by default), instead of exporting it into every shell session:
+    Store the auth key in this project only, in `.ddev/.env.web.local` (loaded into the web container only, and not committed to git by default), instead of exporting it into every shell session:
 
     ```bash
-    ddev dotenv set .ddev/.env --ts-authkey=tskey-auth-your-key-here
+    ddev dotenv set .ddev/.env.web.local --ts-authkey=tskey-auth-your-key-here
     ```
 
     Alternatively, skip the auth key altogether and authenticate interactively with `ddev tailscale login` after your project starts — it prints a login URL to open in your browser.

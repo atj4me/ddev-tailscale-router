@@ -1,8 +1,10 @@
 #ddev-generated
-# The DDEV web image ships the Sury PHP apt source with a signing key that
-# expired 2026-02-04 (EXPKEYSIG B188E2B695BD4743), so any apt-get update fails
-# with exit code 100 and Tailscale's installer dies with it. PHP is already
-# installed in the image, so drop that source before installing Tailscale.
+# Workaround for DDEV v1.24.10 images shipped before 2026-02-04
+# (https://github.com/ddev/ddev/issues/8106): their Sury PHP apt source has an
+# expired signing key (EXPKEYSIG B188E2B695BD4743), so apt-get update fails with
+# exit code 100 and Tailscale's installer dies with it. Current DDEV releases
+# are unaffected; dropping that source keeps installs working on the old image
+# too. PHP is already installed in the image, so nothing needs that source.
 RUN rm -f /etc/apt/sources.list.d/php.list /etc/apt/sources.list.d/sury*
 RUN curl -fsSL https://tailscale.com/install.sh | sh
 

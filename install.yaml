@@ -6,7 +6,7 @@ project_files:
   - web-build/Dockerfile.tailscale-router
   - docker-compose.tailscale-router.yaml
 
-ddev_version_constraint: '>= v1.24.10'
+ddev_version_constraint: '>= v1.25.4'
 
 pre_install_actions:
   - |
@@ -33,12 +33,12 @@ post_install_actions:
     echo "🚀 ddev-tailscale-router installed successfully!"
     echo "Next steps:"
     echo "1. Get your Tailscale auth key from https://tailscale.com/kb/1085/auth-keys"
-    echo "2. Store it in this project only: 'ddev dotenv set .ddev/.env --ts-authkey=tskey-auth-your-key-here'".
+    echo "2. Store it in this project only: 'ddev dotenv set .ddev/.env.web.local --ts-authkey=tskey-auth-your-key-here'".
     echo "   Or skip the key entirely and use 'ddev tailscale login' to authenticate interactively in your browser."
     echo "3. Run: 'ddev restart'"
     echo "4. To access your site over Tailscale, run 'ddev tailscale launch'"
     echo "5. Optionally, add extra Tailscale arguments by setting TS_EXTRA_ARGS in your environment."
-    echo "   For example, to enable ssh, add '--ssh': 'ddev dotenv set .ddev/.env --ts-extra-args=\"--ssh\"'"
+    echo "   For example, to enable ssh, add '--ssh': 'ddev dotenv set .ddev/.env.web.local --ts-extra-args=\"--ssh\"'"
     echo " "
     echo "For more helpful commands, run 'ddev tailscale --help'"
     echo "For more info: https://github.com/atj4me/ddev-tailscale-router"
