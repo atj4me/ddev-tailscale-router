@@ -87,6 +87,8 @@ To launch your project's Tailscale URL in your browser:
 ddev tailscale launch
 ```
 
+If `qrencode` is installed on your host, `launch` also prints a QR code for the URL, so you can open the site on your phone by scanning it instead of typing the address. Install it with `sudo apt install qrencode` (Debian/Ubuntu/WSL) or `brew install qrencode` (macOS). Without it, `launch` behaves exactly as before.
+
 To get your project's Tailscale URL:
 ```bash
 ddev tailscale url
@@ -120,7 +122,7 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 
 | Command | Description |
 | ------- | ----------- |
-| `ddev tailscale launch [--public]` | Share and launch your project's Tailscale URL in your browser (`--public` uses Funnel mode for public access) |
+| `ddev tailscale launch [--public]` | Share and launch your project's Tailscale URL in your browser (`--public` uses Funnel mode for public access); prints a QR code for the URL when `qrencode` is installed on the host |
 | `ddev tailscale share [--public] [--port=<port>]` | Start sharing your project (`--public` uses Funnel mode for public access, `--port` sets the local port) |
 | `ddev tailscale stop` | Stop sharing and reset proxy/funnel configuration |
 | `ddev tailscale stat` | Show Tailscale status for self and active peers |

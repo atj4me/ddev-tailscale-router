@@ -20,6 +20,17 @@ get_tailscale_url() {
     fi
 }
 
+# Print a QR code for the URL when qrencode is installed on the host,
+# so the site can be opened on a phone by scanning instead of typing.
+show_qr_code() {
+    local url="$1"
+    if command -v qrencode >/dev/null 2>&1; then
+        echo ""
+        echo "Scan to open on your phone:"
+        qrencode -t ANSIUTF8 "$url"
+    fi
+}
+
 check_if_sharing() {
     # Check if serve is already running by looking at serve status
     if ddev tailscale proxystat >/dev/null 2>&1; then
@@ -180,7 +191,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "help" ] || [ $# -eq 0 ]; 
     echo ""
     echo "DDEV-Specific Commands:"
     echo "  login          - Authenticate Tailscale (prioritizes TS_AUTHKEY env var)"
-    echo "  launch         - Share and launch the site in your browser"
+    echo "  launch         - Share and launch the site in your browser (QR code when qrencode is installed)"
     echo "  share          - Share the site (runs in background)"
     echo "  stat           - Show Tailscale status (self and active peers only)"
     echo "  proxystat      - Show Tailscale funnel (proxy) status"
@@ -233,6 +244,7 @@ case "$1" in
             TAILSCALE_URL=$(get_tailscale_url)
             if [ -n "$TAILSCALE_URL" ]; then
                 echo "Launching: $TAILSCALE_URL"
+                show_qr_code "$TAILSCALE_URL"
                 # For tests, don't actually launch browser
                 if [ -n "${BATS_TEST_FILENAME:-}" ]; then
                     echo "Test mode: would launch $TAILSCALE_URL"
@@ -252,6 +264,7 @@ case "$1" in
                 TAILSCALE_URL=$(get_tailscale_url)
                 if [ -n "$TAILSCALE_URL" ]; then
                     echo "Launching: $TAILSCALE_URL"
+                    show_qr_code "$TAILSCALE_URL"
                     # For tests, don't actually launch browser
                     if [ -n "${BATS_TEST_FILENAME:-}" ]; then
                         echo "Test mode: would launch $TAILSCALE_URL"
