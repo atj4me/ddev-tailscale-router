@@ -1,5 +1,15 @@
 #ddev-generated
+# Workaround for DDEV v1.24.10 images shipped before 2026-02-04
+# (https://github.com/ddev/ddev/issues/8106): their Sury PHP apt source has an
+# expired signing key (EXPKEYSIG B188E2B695BD4743), so apt-get update fails with
+# exit code 100 and Tailscale's installer dies with it. Current DDEV releases
+# are unaffected; dropping that source keeps installs working on the old image
+# too. PHP is already installed in the image, so nothing needs that source.
+RUN rm -f /etc/apt/sources.list.d/php.list /etc/apt/sources.list.d/sury*
 RUN curl -fsSL https://tailscale.com/install.sh | sh
 
 ARG username
-RUN mkdir -p /var/lib/tailscale && chown -R ${username}:${username} /var/lib/tailscale
+# tailscaled binds its socket in /var/run/tailscale; the Tailscale package no
+# longer creates that dir without systemd (DDEV v1.25 images), so create it in
+# the image, owned by the user the daemon runs as.
+RUN mkdir -p /var/lib/tailscale /var/run/tailscale && chown -R ${username}:${username} /var/lib/tailscale /var/run/tailscale

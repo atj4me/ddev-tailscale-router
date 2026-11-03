@@ -37,15 +37,13 @@ check_if_sharing() {
 }
 
 tailscale_login() {
-    if [ -z "${TS_AUTHKEY:-}" ]; then
-        echo "Error: TS_AUTHKEY environment variable is required for login"
-        echo "Set it in your shell config: export TS_AUTHKEY=tskey-auth-your-key-here"
-        return 1
-    fi
     echo "Authenticating with Tailscale..."
-    if ! ddev exec -s web bash -c 'tailscale up --auth-key="$TS_AUTHKEY" --hostname="$DDEV_SITENAME" ${TS_EXTRA_ARGS:-}' 2>/dev/null; then
+    # With TS_AUTHKEY available in the web container (host environment or the
+    # project's .ddev/.env.web.local) this is non-interactive. Without a key, plain
+    # 'tailscale up' prints a login URL so you can authenticate in a browser.
+    if ! ddev exec -s web bash -c 'if [ -n "${TS_AUTHKEY:-}" ]; then tailscale up --auth-key="$TS_AUTHKEY" --hostname="$DDEV_SITENAME" ${TS_EXTRA_ARGS:-}; else tailscale up --hostname="$DDEV_SITENAME" ${TS_EXTRA_ARGS:-}; fi'; then
         echo "Error: Failed to authenticate with Tailscale"
-        echo "Please check your TS_AUTHKEY and network connectivity"
+        echo "Please check your TS_AUTHKEY (if used) and network connectivity"
         return 1
     fi
     echo "Successfully authenticated with Tailscale"
@@ -80,7 +78,7 @@ check_tailscale_auth() {
         return $?
     else
         echo "Error: Tailscale not authenticated and no TS_AUTHKEY provided"
-        echo "Please set TS_AUTHKEY environment variable or run 'ddev tailscale login'"
+        echo "Please run 'ddev tailscale login' to authenticate interactively, or set a project-only auth key: 'ddev dotenv set .ddev/.env.web.local --ts-authkey=tskey-auth-your-key-here'"
         return 1
     fi
 }
@@ -275,26 +273,26 @@ case "$1" in
         ;;
     "stat")
         if ! check_tailscale_auth; then
-            return 1
+            exit 1
         fi
         tailscale_web status --self --peers=false --active=true
         ;;
     "proxystat")
         if ! check_tailscale_auth; then
-            return 1
+            exit 1
         fi
         tailscale_web funnel status
         ;;
     "url")
         if ! check_tailscale_auth; then
-            return 1
+            exit 1
         fi
         TAILSCALE_URL=$(get_tailscale_url)
         if [ -n "$TAILSCALE_URL" ]; then
             echo "$TAILSCALE_URL"
         else
             echo "Error: Could not retrieve Tailscale URL. Is Tailscale authenticated and running?"
-            return 1
+            exit 1
         fi
         ;;
     *)
@@ -319,7 +317,7 @@ case "$1" in
                     tailscale_web ping --help
                 else
                     if ! check_tailscale_auth; then
-                        return 1
+                        exit 1
                     fi
                     tailscale_web "$@"
                 fi
@@ -331,13 +329,13 @@ case "$1" in
                         # Reset might work without auth, but still check installation
                         if ! ddev exec -s web which tailscale >/dev/null 2>&1; then
                             echo "Error: Tailscale not installed in web container"
-                            return 1
+                            exit 1
                         fi
                         reset_tailscale_serve
                         ;;
                     "status"|*)
                         if ! check_tailscale_auth; then
-                            return 1
+                            exit 1
                         fi
                         tailscale_web "$@"
                         ;;
@@ -346,14 +344,14 @@ case "$1" in
             "status")
                 # Status requires authentication for meaningful output
                 if ! check_tailscale_auth; then
-                    return 1
+                    exit 1
                 fi
                 tailscale_web "$@"
                 ;;
             *)
                 # All other commands require authentication
                 if ! check_tailscale_auth; then
-                    return 1
+                    exit 1
                 fi
                 tailscale_web "$@"
                 ;;
