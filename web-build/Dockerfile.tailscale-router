@@ -8,6 +8,9 @@
 RUN rm -f /etc/apt/sources.list.d/php.list /etc/apt/sources.list.d/sury*
 RUN curl -fsSL https://tailscale.com/install.sh | sh
 
+# qrencode lets `ddev tailscale launch` print a QR code for the site URL.
+RUN apt-get update && apt-get install -y --no-install-recommends qrencode && rm -rf /var/lib/apt/lists/*
+
 ARG username
 # tailscaled binds its socket in /var/run/tailscale; the Tailscale package no
 # longer creates that dir without systemd (DDEV v1.25 images), so create it in
