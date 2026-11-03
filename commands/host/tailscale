@@ -92,6 +92,18 @@ reset_tailscale_serve() {
     echo "Reset complete."
 }
 
+# Print a QR code for the URL, the way `ddev share` does for its tunnel
+# URL (qrencode ships in the web image since DDEV v1.25.2).
+show_qr_code() {
+    local url="$1"
+    local qr_format=ansi256utf8
+    if [ -n "${NO_COLOR:-}" ]; then
+        qr_format=utf8
+    fi
+    # --raw keeps "&" in the URL from being interpreted by bash in the container
+    ddev exec --raw --skip-hooks qrencode -m 2 -t "$qr_format" "$url" 2>/dev/null || true
+}
+
 run_tailscale_share() {
     local cmd="serve"
     local port="${DDEV_ROUTER_HTTP_PORT:-80}"
@@ -156,7 +168,15 @@ run_tailscale_share() {
         echo ""
         echo "🔒 Your site is shared privately within your Tailscale network"
     fi
-    
+
+    local share_url
+    share_url=$(get_tailscale_url) || share_url=""
+    if [ -n "$share_url" ]; then
+        echo ""
+        echo "Scan to open on your phone:"
+        show_qr_code "$share_url"
+    fi
+
     return 0
 }
 

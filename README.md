@@ -121,7 +121,7 @@ Access all [Tailscale CLI](https://tailscale.com/kb/1080/cli) commands plus help
 | Command | Description |
 | ------- | ----------- |
 | `ddev tailscale launch [--public]` | Share and launch your project's Tailscale URL in your browser (`--public` uses Funnel mode for public access) |
-| `ddev tailscale share [--public] [--port=<port>]` | Start sharing your project (`--public` uses Funnel mode for public access, `--port` sets the local port) |
+| `ddev tailscale share [--public] [--port=<port>]` | Start sharing your project (`--public` uses Funnel mode for public access, `--port` sets the local port); prints a QR code for the URL, like `ddev share` does |
 | `ddev tailscale stop` | Stop sharing and reset proxy/funnel configuration |
 | `ddev tailscale stat` | Show Tailscale status for self and active peers |
 | `ddev tailscale proxystat` | Show Funnel/Serve (proxy) status |
